@@ -1,0 +1,25 @@
+{% load issue_mapper urls %}
+{% if full %}<div class="issue-container well shadow">{% endif %}
+<div class="span1a">{% inline_voter item %}</div>
+<div class="span10" style="width:88%;">
+    {% if item.object.og_image_thumbnail %}<div class="link-thumbnail" style="float:left;"><img
+            src="{{ item.object.og_image_thumbnail.url }}"
+            {#style="max-width:50px;max-height:50px;"#}
+            class="shadow"
+            alt=""
+            title=""
+        /></div>{% endif %}
+    <div style="float:left; {% if item.object.og_image_thumbnail %}width:87%;{% else %}width:100%;{% endif %}">
+        <div class="issue-link"><a href="{{ item.object.url }}" target="_blank" title="{{ item.object.id }}">{{ item.object.better_display_text|safe }}</a>&nbsp;<span class="muted">({{ item.object.domain }})</span></div>
+        <div class="issue-details">
+            <span>submitted {{ item.object.created|pretty_date|lower }}{% if not request.context and item.object.context %}
+                in <a class="context-filter-link" href="/c/{{ item.object.context.slug }}/">{{ item.object.context.friendly_name|safe }}</a>{% endif %}</span>
+            {% url_tags item %}
+        </div>
+    </div>
+    <div class="clearfix"></div>
+    <div class="issue-details">
+        {#<span><a href="{% if person_filter %}{% url 'person_link' person_filter.slug item.object.id %}{% else %}{{ item.object.get_absolute_url }}{% endif %}"><b>{% if item.object.comments.count %}{{ item.object.comments.get_undeleted.count }}{% else %}0{% endif %}</b> comment{% plurals item.object.comments.get_undeleted %}</a></span>#}
+    </div>
+</div>
+{% if full %}<div class="clearfix"></div></div>{% endif %}

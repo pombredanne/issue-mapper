@@ -1,0 +1,48 @@
+{% load issue_mapper %}
+<div id="person-summary" class="well shadow person-summary-well" style="">
+    <legend>
+        {% adminlink person %}{{ person.display_name }}
+	        <span class="muted">
+	            {{ person.last_term_title }}
+	            {% if person.object.has_current_user_match %}
+                    - <b>{{ person.object.current_user_match_percent|floatformat:0 }}%</b>
+                    match
+                {% endif %}
+	        </span>
+	        {% if request.user.is_authenticated and priviledges.can.flag_person %}
+	            &nbsp;<i
+	                class="icon-flag {% if person.flagged %}flagged{% endif %}"
+	                {% if person.flagged %}
+	                    alt="You flagged this issue for moderation or removal."
+	                    title="You flagged this issue for moderation or removal."
+	                {% else %}
+	                    alt="Flag issue for moderation or removal."
+	                    title="Flag issue for moderation or removal."
+	                    data-reveal-id="{% url 'flag' 'person' person.id %}
+	                {% endif %}"></i>
+	        {% endif %}
+        {% endadminlink %}
+    </legend>
+    <div class="clearfix"></div>
+    <div class="person-summary-lower" style="display:none;">
+        <span class="span2">
+            {% person_photo person 150 150 %}
+        </span>
+        <span class="span10">
+             {% for page_url, page_name in person.useful_links %}
+                 {% if not forloop.first %}|{% endif %} <a href="{{ page_url }}" target="_blank">{{ page_name }}</a>
+             {% endfor %}
+             {% if person.terms.all %}
+	             <h4>Terms</h4>
+	             {% for term in person.terms.all %}
+	                 <p>{{ term.nameless_description }}</p>
+	             {% endfor %}
+             {% endif %}
+        </span>
+        <div class="clearfix"></div>
+    </div>
+    <div class="clearfix"></div>
+    <div class="person-summary-lower-toggle">
+        <i class="icon-chevron-down"></i><i class="icon-chevron-down"></i><i class="icon-chevron-down"></i>
+    </div>
+</div>

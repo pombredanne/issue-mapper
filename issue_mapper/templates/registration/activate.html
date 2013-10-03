@@ -1,0 +1,16 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block title %}Activate{% endblock %}
+{% block body %}
+    <div class="content">
+        <fieldset>
+            {% if account %}
+                <legend>{% trans "Account successfully activated." %}</legend>
+                <p><a href="{% url 'auth_login' %}">{% trans "Log in" %}</a></p>
+            {% else %}
+                <legend>{% trans "Account activation failed." %}</legend>
+                <p>This activation link is invalid or has expired.</p>
+            {% endif %}
+        </fieldset>
+    </div>
+{% endblock %}

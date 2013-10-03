@@ -1,0 +1,17 @@
+{% load issue_mapper urls %}
+<div class="comment-form-container" comment_form_id="{{ uuid }}" style="{% if not show %}display:none;{% endif %}">
+    <textarea
+        class="new-comment-field"
+        url="{% url 'comment_create_ajax' object_type parent.id %}"
+        {{ object_type }}_id="{{ parent.id }}"
+        rows="4"
+        placeholder="enter comment here{#{% if parent.person %}about {{ parent.person.display_name }}{% endif %}{% if parent.issue %} on the issue &quot;{{ parent.issue.friendly_text_no_punct|lower }}&quot;{% endif %}.#}"
+        maxlength="700"></textarea>
+    <div class="clearfix"></div>
+    <input
+        class="new-comment-submit-button btn"
+        type="button"
+        value="Submit Comment" />
+    &nbsp;<span class="markdown-link"><a href="http://en.wikipedia.org/wiki/Markdown" target="_blank">markdown supported</a></span>
+    &nbsp;<span class="new-comment-maxlength-notice muted"></span>
+</div>

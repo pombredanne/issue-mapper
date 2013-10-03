@@ -1,0 +1,44 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block title %}Motion{% endblock %}
+{% block body %}
+    <div class="span3">
+	    <div class="view-all-motions">
+	        <a href="{% url 'motion_list' %}"><i class="icon-chevron-left"></i> View all motions</a>
+	        <br/>
+	        <br/>
+	    </div>
+	    <dl>
+	        <dt>Status</dt>
+	        <dd>{{ motion.status }}</dd>
+	        {% if not motion.pending %}<dt>Resolution</dt><dd>{{ motion.resolution }}</dd>{% endif %}
+	        
+	        <dt>Votes<dt>
+	        <dd>{{ motion.votes_up }} for / {{ motion.votes_down }} against</dd>
+	        <dt>Forecast</dt>
+	        <dd>{{ motion.forecast_str|title }}</dd>
+	        
+	        <dt>Schedule</dt>
+	        <dd>Voting will continue until ? and will only pass if at least ? votes are received, of which ?% must favor the motion.</dd>
+	        
+	        <dt>Concerning</dt>
+	        <dd><a href="{{ motion.object.get_absolute_url }}">{{ motion.object }}</a></dd>
+	        
+	        <dt>Action</dt>
+	        <dd>{{ motion.action }}</a></dd>
+	        
+            <dt>Effect</dt>
+            <dd>{{ motion.effect_friendly_text }}</dd>
+	        
+	    </dl>
+	    {#<p>Goal: {{ motion.passage_criteria_friendly_text }}</p>#}
+	    {#<p>Eligibility: {{ motion.eligibility }}</p>#}
+    </div>
+    <div class="span8 motion-comments">
+	    <fieldset>
+		    <legend>Motion {{ motion.id }}: {{ motion.description_short }}</legend>
+		    <div class="sub-header muted">created by <a href="{% url 'profile' motion.creator.user.username %}">{{ motion.creator }}</a> on {{ motion.created }}</div>
+		    <div>comments go here</div>
+	    </fieldset>
+	</div>
+{% endblock %}

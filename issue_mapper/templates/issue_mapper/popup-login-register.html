@@ -1,0 +1,36 @@
+{% load issue_mapper i18n %}
+<div id="{{ uuid }}" class="reveal-modal">
+    <fieldset>
+        {#<legend>Login/Register?</legend>#}
+        <div class="popup-body">
+            <p>
+                {% login_form %}
+            </p>
+            <p>
+                {% registration_form %}
+            </p>
+        </div>
+    </fieldset>
+    <a class="close-reveal-modal">&#215;</a>
+    <script type="text/javascript">
+    (function($){
+        $(document).ready(function(){
+            $('#{{ uuid }} .no-button').click(function(){
+                $('#{{ uuid }} .close-reveal-modal').click();
+                return false;
+            });
+            
+            $(".alert-message").alert();
+            
+            $('#login-form').submit(function(){
+                $('#login-form input[type=submit]').button('loading');
+            });
+            $('#login-form:not(.filter) :input:visible:first').focus();
+            
+            $('#registration-form').submit(function(){
+                $('#registration-form input[type=submit]').button('loading');
+            });
+        });
+    })(jQuery);
+    </script>
+</div>

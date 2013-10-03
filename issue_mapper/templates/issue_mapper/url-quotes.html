@@ -1,0 +1,8 @@
+<div class="quotes-list" data-url-id="{{ url.id }}">
+    {% for quote in url.quotes.all %}
+        <blockquote>
+            <p>{{ quote.text }}</p>
+            <footer>&ndash; <cite><a href="{{ quote.url }}" target="_blank">{{ quote.person.display_name }} <span class="muted">on {{ quote.said_date }}</span></a></cite></footer>
+        </blockquote>
+    {% endfor %}
+</div>

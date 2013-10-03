@@ -1,0 +1,19 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block title %}Login{% endblock %}
+{% block body %}
+    {% include "registration/login_form.html" %}
+{% endblock %}
+{% block body-js %}
+    <script type="text/javascript">
+    (function($){
+        $(document).ready(function(){
+            $(".alert-message").alert();
+            $('#login-form').submit(function(){
+                $('#login-form input[type=submit]').button('loading');
+            });
+            $('#login-form:not(.filter) :input:visible:first').focus();
+        });
+    })(jQuery);
+    </script>
+{% endblock body-js %}

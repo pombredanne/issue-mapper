@@ -1,0 +1,55 @@
+{% load issue_mapper i18n %}
+<div id="{{ uuid }}" class="reveal-modal">
+    <fieldset>
+        <legend>Flag {{ object_type }} for moderation?</legend>
+        <div class="popup-body">
+	        <p>
+	            <span class="comment-error" style="color:red;display:none;"></span>
+	            <textarea name="comment" rows="4" maxlength="700" placeholder="Please explain why you think this {{ object_type }} should be flagged."></textarea>
+	        </p>
+	        <div class="actions centered">
+	            <input
+	                url="{% url 'flag_confirmed' object_type object_id %}"
+	                type="submit"
+	                class="btn btn-primary yes-button"
+	                value="Yes, I would like a moderator to edit or remove this {{ object_type }}" />&nbsp;<input
+	                type="submit"
+	                class="btn btn-info no-button"
+	                value="Nevermind" />
+	        </div>
+        </div>
+    </fieldset>
+    <a class="close-reveal-modal">&#215;</a>
+	<script type="text/javascript">
+	(function($){
+		$(document).ready(function(){
+		    $('#{{ uuid }} .yes-button').click(function(){
+		    	var el = $(this);
+		        var url = el.attr('url');
+		        var comment_el = $('#{{ uuid }} [name=comment]');
+		        var comment = comment_el.val();
+		        if(!comment){
+		        	$('#{{ uuid }} .comment-error').html('This field is required.').show();
+		        	comment_el.addClass('error');
+		        	return;
+		        }
+		        $.ajax({
+		        	url:url,
+		        	data:{comment:comment},
+		        	dataType:'json',
+		        	success:function(data, textStatus, jqXHR){
+		        		$('#{{ uuid }} .popup-body').html('<p>Thank you. Your flag has been recorded.</p>');
+		        		setTimeout(function(){
+		        			$('#{{ uuid }} .close-reveal-modal').click();
+		        		}, 3000);
+		        	}
+		        });
+		    });
+		    $('#{{ uuid }} .no-button').click(function(){
+		        $('#{{ uuid }} .close-reveal-modal').click();
+		        return false;
+		    });
+		});
+	})(jQuery);
+	</script>
+</div>

@@ -1,0 +1,45 @@
+{% load issue_mapper urls markup %}
+{% if full %}<div class="issue-container"><div class="span10">{% endif %}
+<div class="comment" comment_id="{{ item.id }}">
+    {% if item.deleted %}
+        <span class="comment-commenter muted">[deleted]</span>
+        <div class="comment-content muted"></div>
+    {% else %}
+        <span class="comment-commenter">
+            {% inline_voter item %}
+            <a href="{% url 'profile' item.creator.user.username %}">{{ item.creator }}</a>
+            <span class="muted">
+                {{ item.created|pretty_date }} {#{{ item.target }}#}
+                {% if item.creator.user == request.user %}|
+                    <a  class="comment-delete"
+                        href="#">delete</a>
+                    <span class="comment-delete-confirm" style="display:none;">
+                        &nbsp;<b>are you sure?</b>
+                        &nbsp;<a  class="comment-delete-yes"
+                            url="{% url 'comment_delete_ajax' item.id %}"
+                            href="#">yes</a> or
+                        &nbsp;<a  class="comment-delete-no"
+                            href="#">no</a>
+                    </span>
+                {% endif %}
+                {% if request.user.is_authenticated %}
+                    | <a class="comment-reply-show" href="#">reply</a>
+                {% else %}
+                    | <a class="prompt-login-register" href="#" data-reveal-id="{% url 'login_register' %}">reply</a>
+                {% endif %}
+                {% if not show_replies %}
+                    | <a href="{{ item.get_absolute_url }}">{{ item.undeleted_replies.count }} replies</a>
+                {% endif %}
+                about <a href="{{ item.top_target.get_absolute_url }}">{{ item.top_target_name }}</a>
+            </span>
+        </span>
+        <div class="comment-content">{{ item.text|markdown:"safe" }}</div>
+    {% endif %}
+    {% comment_form item 0 %}
+    {% if show_replies %}
+        <div class="comment-replies">{% for reply in item.replies %}
+            {% list_item reply %}
+        {% endfor %}</div>
+    {% endif %}
+</div>
+{% if full %}</div><div class="clearfix"></div></div>{% endif %}

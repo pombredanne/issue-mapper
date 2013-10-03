@@ -1,0 +1,33 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block title %}Privileges{% endblock %}
+{% block body %}
+    <div class="content">
+        <fieldset>
+            <legend>{% trans "Privileges" %}</legend>
+            <div><a href="{% url 'profile' person.user.username %}"><i class="icon-chevron-left"></i>&nbsp;Back to Profile</a></div>
+            <br/>
+            <table>
+            <thead>
+                <th style="text-align:left;">Privilege</th>
+                <th>Threshold</th>
+            </thead>
+            <tbody>
+            {% for priv_name, priv_label, priv_enabled, priv_threshold in privileges %}
+                <tr class="privilege">
+                    <td class="label" title="{{ priv_threshold }}">{{ priv_label|title }}</td>
+                    <td class="enabled">
+                        &nbsp;{{ priv_threshold }}&nbsp;
+                        {% if priv_enabled %}
+                            <i class="icon-ok" title="you have this privilege"></i>
+                        {% else %}
+                            <i class="icon-remove"></i>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody></table>
+            <div class="clearboth"></div>
+        </fieldset>
+    </div>
+{% endblock %}

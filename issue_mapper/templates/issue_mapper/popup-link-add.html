@@ -1,0 +1,107 @@
+{% load issue_mapper i18n %}
+<div id="{{ uuid }}" class="reveal-modal">
+    <fieldset>
+        <legend>Add Link</legend>
+        <div class="popup-body">
+            <form>
+                <p>
+                    <span class="comment-error" style="color:red;display:none;"></span>
+                    <input name="issue_id" type="hidden" value="{{ request.GET.issue_id }}" />
+                    <input name="person_id" type="hidden" value="{{ request.GET.person_id }}" />
+                    <input name="context_id" type="hidden" value="{{ request.GET.context_id }}" />
+                    <input name="context" type="text" placeholder="country or state" style="width:100%;" value="{{ request.GET.context }}" />
+                    <input name="url" type="text" placeholder="url" style="width:100%;" />
+                </p>
+                <div class="actions centered">
+                    <input
+                        type="submit"
+                        class="btn btn-primary yes-button"
+                        value="Submit" />
+                    <input
+                        type="submit"
+                        class="btn no-button"
+                        value="Cancel" />
+                </div>
+            </form>
+        </div>
+    </fieldset>
+    <a class="close-reveal-modal">&#215;</a>
+    <script type="text/javascript">
+    (function($){
+        $(document).ready(function(){
+            $("#{{ uuid }} [name=context]").autocomplete({
+                source: "{% url 'search_ajax' 'context' %}",
+                minLength: 2,
+                focus: function(event, ui){
+                    $( "#{{ uuid }} [name=context_id]" ).val(ui.item.value);
+                    $( "#{{ uuid }} [name=context]" ).val(ui.item.label);
+                    return false;
+                },
+                select: function(event, ui){
+                    $( "#{{ uuid }} [name=context_id]" ).val(ui.item.value);
+                    $( "#{{ uuid }} [name=context]" ).val(ui.item.label);
+                    return false;
+                }
+            });
+            
+            setTimeout(function(){
+                // Must use timeout since element is unfocusable until
+                // animation is complete.
+                $('#{{ uuid }} input[name=url]').focus();
+            }, 400);
+            $('#{{ uuid }} form').submit(function(){
+                var el = $(this);
+                var url_el = $('#{{ uuid }} input[name=url]');
+                var url = $.trim(url_el.val());
+                var issue_id = $('#{{ uuid }} input[name=issue_id]').val();
+                var person_id = $('#{{ uuid }} input[name=person_id]').val();
+                var context_el = $('#{{ uuid }} input[name=context]');
+                var context_id = $('#{{ uuid }} input[name=context_id]').val();
+                if(!context_id){
+                    context_el.addClass('error');
+                    return false;
+                }
+                context_el.removeClass('error');
+                if(!url){
+                    url_el.addClass('error');
+                    return false;
+                }
+                $('#{{ uuid }} .comment-error').hide();
+                url_el.removeClass('error');
+                $.ajax({
+                    url:'{% url "link_add_ajax" %}',
+                    data:{
+                        url:url,
+                        issue_id:issue_id,
+                        person_id:person_id,
+                        context_id:context_id
+                    },
+                    type:'GET',
+                    dataType:'json',
+                    success:function(data, textStatus, jqXHR){
+                        if(data.success){
+                            $('#{{ uuid }} .comment-error').hide();
+                            var content = $('<div/>').html(data.html).contents();
+                            $('.search-list-left:first').prepend(content);
+                            var el = $('.issue-container:first');
+                            el.css('border','1px solid #0f0');
+                            el.animate({'border-color':'white'}, 5000);
+                            $('#{{ uuid }} .close-reveal-modal').click();
+                        }else{
+                            $('#{{ uuid }} .comment-error').html(data.message);
+                            $('#{{ uuid }} .comment-error').show();
+                        }
+                        window.issue_mapper.bind_inline_link_voters();
+                    }
+                });
+                return false;
+            });
+            $('#{{ uuid }} .no-button').click(function(e){
+                e.preventDefault();
+                $('#{{ uuid }} .close-reveal-modal').click();
+                return false;
+            });
+        });
+    })(jQuery);
+    </script>
+</div>

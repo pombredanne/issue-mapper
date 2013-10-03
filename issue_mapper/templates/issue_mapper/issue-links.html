@@ -1,0 +1,21 @@
+{% load issue_mapper %}
+{% for link in links %}
+    <p class="muted related-link">
+        {% inline_voter link %}
+        &nbsp;&nbsp;<a href="{{ link.url.url }}" target="_blank" title="{{ link.id }}">{{ link.better_display_text|safe }}</a>
+        <br/>
+        <span class="timestamp">added by {{ link.creator }} on {{ link.created }}</span>
+        {% if request.user.is_authenticated and priviledges.can.flag_link %}
+	        <i
+	            class="icon-flag {% if link.flagged %}flagged{% endif %}"
+	            {% if link.flagged %}
+	                alt="You flagged this link for moderation or removal."
+                    title="You flagged this link for moderation or removal."
+	            {% else %}
+	                alt="Flag link for moderation or removal."
+	                title="Flag link for moderation or removal."
+	                data-reveal-id="{% url 'flag' 'link' link.id %}
+	            {% endif %}"></i>
+        {% endif %}
+    </p>
+{% endfor %}

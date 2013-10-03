@@ -1,0 +1,107 @@
+{% load issue_mapper %}
+{% if form.errors %}
+    <div>
+        errors:{{ form.errors }}
+    </div>
+    <br/>
+{% endif %}
+<form method="POST" action="">
+    <div id="issue-container" class="well shadow">
+        {% if form.person.real %}
+            <div class="span1">{% person_photo form.person %}</div>
+        {% endif %}
+        <div class="{% if form.person.real %}span10{% else %}span12{% endif %} issue-question">
+            <p>{% adminlink form.issue "issue" %}{{ form.friendly_text }}{% endadminlink %}</p>
+        </div>
+        <div class="clearboth"></div>
+        <div class="buttons {% if form.done %}buttons-terminal{% endif %} {% if form.buttons_fixed_buttom %}buttons-fixed-bottom{% endif %}">
+            {% if form.issue.active and form.allow_answer %}
+                {% if not form.person and request.user.is_authenticated %}
+                    <div class="slide-out-options" style="display:none;">
+                        <div class="options shadow">
+                            {% for k, v in form.importances %}
+                                <div>
+                                    <input
+                                        class="importance-option"
+                                        type="radio"
+                                        name="importance"
+                                        url="{% url 'position_set_ajax' %}"
+                                        id="importance_{{ k }}"
+                                        {% if k == form.position.importance %}checked="checked"{% endif %}
+                                        value="{{ k }}" />
+                                    <label for="importance_{{ k }}" class="{% if k == form.position.importance %}selected{% endif %}">{{ v }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="centered-fixed" style="position:relative;">
+                    <input id="id_polarity" type="hidden" name="polarity" value="{{ form.position.polarity }}" />
+                    <input id="id_issue" type="hidden" name="issue" value="{{ form.issue.slug }}" />
+                    <input id="id_person" type="hidden" name="person" value="{{ form.person.slug }}" />
+                    {% for action_value, action_name in form.actions %}
+                        {% if request.user.is_authenticated %}
+                            <button
+                                type="submit"
+                                name="submit"
+                                value="{{ action_value }}"
+                                url="{% url 'position_set_ajax' %}"
+                                {% if form.person %}final="true"{% endif %}
+                                class="btn btn-primary issue-answer-button btn-{{ action_value }} {% if form.position.polarity == action_value %}selected{% endif %}">{{ action_name }}</button>
+                        {% else %}
+                            <a
+                                data-reveal-id="{% url 'login_register' %}"
+                                class="btn btn-primary issue-answer-button btn-{{ action_value }} {% if form.position.polarity == action_value %}selected{% endif %}">{{ action_name }}</a>
+                        {% endif %}&nbsp;
+                    {% endfor %}
+                
+                    {#{% inline_motion_button form.issue 'trash' 'icon-trash' %}#}
+
+                    {% if request.user.is_authenticated %}
+                        <a
+                            href="{% if form.person %}{% url 'skip_person_issue' form.person.slug form.issue.slug %}{% else %}{% url 'skip_issue' form.issue.slug %}{% endif %}"
+                            class="btn btn-skip-next btn-primary">{% if form.positioned %}Next{% else %}Ask me later{% endif %} &rarr;</a>
+                    {% else %}
+                        <a
+                            data-reveal-id="{% url 'login_register' %}"
+                            class="btn btn-skip-next btn-primary">{% if form.positioned %}Next{% else %}Ask me later{% endif %} &rarr;</a>
+                    {% endif %}
+                    
+                </div>
+                <div class="clearfix"></div>
+                <br/>
+            {% endif %}
+            <div class="muted vote-subline">
+                viewed <b>{{ form.issue.view_count }}</b> times
+                {% if form.allow_answer %} |
+                    <i
+                        class="button-float-control button-float-control-down icon-circle-arrow-down"
+                        {% if form.buttons_fixed_buttom %}style="display:none;"{% endif %}
+                        title="Detach"></i>
+                    <i
+                        class="button-float-control button-float-control-up icon-circle-arrow-up"
+                        {% if not form.buttons_fixed_buttom %}style="display:none;"{% endif %}
+                        title="Reattach"></i>
+                {% endif %}
+                {% if form.position %}
+                    | you answered on <b>{{ form.position.created }}</b>
+                    {% if not form.positionable %}
+                        | you need to wait <b>{{ form.IM_WAIT_DAYS_BEFORE_REANSWER }}</b> day before re-answering
+                    {% endif %}
+                {% endif %}
+                {% if request.user.is_authenticated and priviledges.can.flag_issue %}
+                    | <i
+                        class="icon-flag {% if form.issue.flagged %}flagged{% endif %}"
+                        {% if form.issue.flagged %}
+                            alt="You flagged this issue for moderation or removal."
+                            title="You flagged this issue for moderation or removal."
+                        {% else %}
+                            alt="Flag issue for moderation or removal."
+                            title="Flag issue for moderation or removal."
+                            data-reveal-id="{% url 'flag' 'issue' form.issue.id %}"
+                        {% endif %}></i>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,10 @@
+{% extends "issue_mapper/base-submit.html" %}
+{% load issue_mapper i18n %}
+
+{% block form-fields %}
+    {% inline_form_field form.first_name %}
+    {% inline_form_field form.nickname %}
+    {% inline_form_field form.middle_name %}
+    {% inline_form_field form.last_name %}
+    <div class="clearfix"></div>
+{% endblock %}

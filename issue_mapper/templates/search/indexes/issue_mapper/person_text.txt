@@ -1,0 +1,4 @@
+{{ object.nickname }}
+{{ object.first_name }}
+{{ object.middlename_name }}
+{{ object.last_name }}

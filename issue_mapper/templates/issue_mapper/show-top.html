@@ -1,0 +1,22 @@
+{% load issue_mapper %}
+{% for r in q %}
+    <div class="show-top-item show-top-item-{{ type }}">
+        <span class="count" title="{{ r.top_weight }}">{{ forloop.counter }}</span>
+        <span class="content">
+            {% switch type %}
+                {% case "issue" %}
+                    <a href="{% url 'issue' r.slug %}"
+                        alt="{{ r.friendly_text }}"
+                        title="{{ r.friendly_text }}">{{ r.friendly_text }}</a>
+                    {#<br/><span class="muted">{{ r.links.count }} links</span>#}
+                {% case "link" %}
+                    <a href="{{ r.object.get_absolute_url }}"
+                        alt="{{ r.better_display_text_with_ref }}"
+                        title="{{ r.better_display_text_with_ref }}">{{ r.better_display_text_with_ref }}</a>
+                {% case "person" %}
+                    <a href="{% url 'person' r.slug %}">{{ r.display_name }} <span class="muted">{{ r.last_term_title }}{% if r.has_current_user_match %} - <b>{{ r.current_user_match_percent|floatformat:0 }}%</b>{% endif %}</span></a>
+                    {#<br/><span class="muted">{{ r.links.count }} links</span>#}
+            {% endswitch %}
+        </span>
+    </div>
+{% endfor %}

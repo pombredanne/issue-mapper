@@ -1,0 +1,47 @@
+<fieldset id="{{ uuid }}" style="text-align:center; width:100%; height:3em;">
+    <form>
+        <input name="context_slug" type="hidden" />
+        <input
+            name="context" type="text"
+            placeholder="state"
+            size="10"
+            style="width:150px; text-align:center; display:inline;" />&nbsp;<input
+            type="submit"
+            class="btn btn-primary yes-button"
+            style="display:inline; vertical-align:top;"
+            value="Go" />
+    </form>
+    <script type="text/javascript">
+    (function($){
+        $(document).ready(function(){
+            
+            $("#{{ uuid }} [name=context]").autocomplete({
+                source: "{% url 'search_ajax' 'context' %}?value=slug",
+                minLength: 2,
+                focus: function(event, ui){
+                    $("#{{ uuid }} [name=context_slug]").val(ui.item.value);
+                    $("#{{ uuid }} [name=context]").val(ui.item.label);
+                    return false;
+                },
+                select: function(event, ui){
+                    $("#{{ uuid }} [name=context_slug]").val(ui.item.value);
+                    $("#{{ uuid }} [name=context]").val(ui.item.label);
+                    return false;
+                }
+            });
+            
+            setTimeout(function(){
+                // Must use timeout since element is unfocusable until
+                // animation is complete.
+                $('#{{ uuid }} input[name=context]').focus();
+            }, 400);
+            
+            $('#{{ uuid }} form').submit(function(){
+                var el = $(this);
+                window.location.href = '/c/' + $("#{{ uuid }} [name=context_slug]").val();
+                return false;
+            });
+        });
+    })(jQuery);
+    </script>
+</fieldset>

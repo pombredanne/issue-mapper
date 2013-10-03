@@ -1,0 +1,31 @@
+<i  class="{{ up_icon }} vote-to-{{ attribute }} up inline-motion-button {% if vote.is_up %}inline-motion-button-selected{% endif %}"
+    url="{{ up_vote_url }}"
+    object_type="{{ object_type }}"
+    object_id="{{ object_id }}"
+    attribute="{{ attribute }}"
+    v="{{ new_value }}"
+    {% if vote %}
+    alt="{{ vote.description }}"
+    title="{{ vote.description }}"
+    {% else %}
+    alt="Vote to {{ attribute }}."
+    title="Vote to {{ attribute }}."
+    {% endif %}
+></i>
+{% if down_icon %}
+    <i  class="{{ down_icon }} vote-to-un-{{ attribute }} down inline-motion-button {% if not vote.is_up %}inline-motion-button-selected{% endif %}"
+        url="{{ down_vote_url }}"
+        object_type="{{ object_type }}"
+        object_id="{{ object_id }}"
+        attribute="{{ attribute }}"
+        v="{{ new_value }}"
+        {% if not vote %}
+        alt="{{ vote.description }}"
+        title="{{ vote.description }}"
+        {% else %}
+        alt="Vote to un-{{ attribute }}."
+        title="Vote to un-{{ attribute }}."
+        {% endif %}
+></i>
+{% endif %}
+<span class="vote-to-{{ attribute }}-count">{% if motion %}{{ motion.vote_total }}{% endif %}</span>

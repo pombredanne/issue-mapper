@@ -1,0 +1,93 @@
+{% load issue_mapper i18n %}
+<div id="{{ uuid }}" class="reveal-modal">
+    <fieldset>
+        <legend>Add Person Tag</legend>
+        <div class="popup-body">
+            <form>
+                <p>
+                    <span class="comment-error" style="color:red;display:none;"></span>
+                    <input name="url_id" type="hidden" value="{{ request.GET.url_id }}" />
+                    <input name="url_context_id" type="hidden" value="{{ request.GET.url_context_id }}" />
+                    <input name="person_id" type="hidden" value="" />
+                    <input name="person" type="text" placeholder="search for person" style="width:100%;" />
+                </p>
+                <div class="actions centered">
+                    <input
+                        type="submit"
+                        class="btn btn-primary yes-button"
+                        value="Add Tag" />&nbsp;<input
+                        type="submit"
+                        class="btn no-button"
+                        value="Cancel" />
+                </div>
+            </form>
+        </div>
+    </fieldset>
+    <a class="close-reveal-modal">&#215;</a>
+    <script type="text/javascript">
+    (function($){
+        $(document).ready(function(){
+            
+            $("#{{ uuid }} [name=person]").autocomplete({
+                source: "{% url 'search_ajax' 'person' %}",
+                minLength: 2,
+                focus: function(event, ui){
+                    $( "#{{ uuid }} [name=person_id]" ).val(ui.item.value);
+                    $( "#{{ uuid }} [name=person]" ).val(ui.item.label);
+                    return false;
+                },
+                select: function(event, ui){
+                    $( "#{{ uuid }} [name=person_id]" ).val(ui.item.value);
+                    $( "#{{ uuid }} [name=person]" ).val(ui.item.label);
+                    return false;
+                }
+            });
+            
+            setTimeout(function(){
+                // Must use timeout since element is unfocusable until
+                // animation is complete.
+                $('#{{ uuid }} input[name=person]').focus();
+            }, 400);
+            $('#{{ uuid }} form').submit(function(){
+                var el = $(this);
+                var url_el = $('#{{ uuid }} input[name=url_id]');
+                var url_id = $.trim(url_el.val());
+                var person_id = $('#{{ uuid }} input[name=person_id]').val();
+                if(!url_id){
+                    url_el.addClass('error');
+                    return false;
+                }
+                $('#{{ uuid }} .comment-error').hide();
+                url_el.removeClass('error');
+                $.ajax({
+                    url:'{% url "link_add_ajax" %}',
+                    data:{
+                        url_id:url_id,
+                        person_id:person_id,
+                        resptype:'url_tags'
+                    },
+                    type:'GET',
+                    dataType:'json',
+                    success:function(data, textStatus, jqXHR){
+                        if(data.success){
+                            var content = $('<div/>').html(data.html).contents();
+                            $('ul.tags[data-url-id='+url_id+']').replaceWith(content);
+                            $('#{{ uuid }} .close-reveal-modal').click();
+                        }else{
+                            $('#{{ uuid }} .comment-error').html(data.message);
+                            $('#{{ uuid }} .comment-error').show();
+                        }
+                        window.issue_mapper.bind_inline_link_voters();
+                    }
+                });
+                return false;
+            });
+            $('#{{ uuid }} .no-button').click(function(e){
+                e.preventDefault();
+                $('#{{ uuid }} .close-reveal-modal').click();
+                return false;
+            });
+        });
+    })(jQuery);
+    </script>
+</div>

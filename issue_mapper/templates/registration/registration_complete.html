@@ -1,0 +1,12 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block title %}Registration Complete{% endblock %}
+{% block body %}
+    <fieldset>
+        <legend>{% trans 'Registration Complete' %}</legend>
+        <p>{% trans "Thanks for registering!" %}</p>
+        <p>{% trans "An activation email has been sent to you." %}</p>
+        <p>{% trans "Please click the link in the email to activate your account." %}</p>
+        <p>{% trans "If you don't see it, be sure to check your spam folder." %}</p>
+    </fieldset>
+{% endblock %}

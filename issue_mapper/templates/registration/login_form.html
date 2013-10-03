@@ -1,0 +1,25 @@
+{% load issue_mapper i18n %}
+<div class="content">
+    {% if form.errors %}
+        <div class="alert alert-block fade in">
+            <a class="close" data-dismiss="alert" href="#">×</a>
+            <p><strong>{% trans "Oh snap!" %}</strong> {% trans "Please enter a correct username and password. Note that both fields are case-sensitive." %}</p>
+        </div>
+    {% endif %}
+    <form action="{% url 'django.contrib.auth.views.login' %}" method="post" id="login-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        <fieldset>
+            <legend>{% trans 'Log in' %}</legend>
+            {% for field in form %}
+                {% include 'registration/form_field.html' %}
+            {% endfor %}
+            <div class="actions">
+                <input type="submit" class="btn btn-primary" value="{% trans 'Submit' %}" />&nbsp;
+                <button type="reset" class="btn">{% trans 'Cancel' %}</button>
+            </div>
+        </fieldset>
+    </form>
+    <p><a href="{% url 'django.contrib.auth.views.password_reset' %}">{% trans "Reset my password" %}</a></p>
+    <p><a href="{% url 'registration_register' %}">Create a new account</a></p>
+</div>

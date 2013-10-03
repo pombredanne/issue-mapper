@@ -1,0 +1,102 @@
+{% load compressed staticfiles %}
+{% if settings.IM_USE_CMS %}{% load cms_tags %}{% endif %}
+<!DOCTYPE html>
+<html lang="en" xml:lang="en">
+    <head>
+        {% block head %}
+            <meta charset="utf-8">
+            <title>{% block title %}{% if full_title %}{{ full_title }}{% endif %}{% endblock %}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <link rel="shortcut icon" href="{% static 'issue_mapper/img/favicon.ico' %}">
+            {% for rss_title, rss_url in rss_urls %}
+                <link
+                    rel="alternate"
+                    type="application/rss+xml"
+                    title="{{ rss_title }}"
+                    href="{{ rss_url }}" />
+            {% endfor %}
+            {% compressed_css 'all' %}
+        {% endblock head %}
+    </head>
+    <body>
+        <div id="wrap">
+            <div class="page-header">
+                <div class="tool-bar">
+                    <div class="content-left">
+                        <span class="name">
+                            {#<span class="header-icon"><i class="icon-certificate"></i></span>#}
+                            &nbsp;
+                            <a href="/"><span class="header-title">{{ settings.IM_TITLE_SAFE|safe }}</span></a>
+                        </span>
+                        <a href="/about/">About</a> | <a href="/contact/">Contact</a>
+                    </div>
+                    <div class="content-right">
+                        {% if request.user.is_anonymous %}
+                            <a href="{% url 'django.contrib.auth.views.login' %}?next={{ request.path }}">login</a>
+                            {% if priviledges.allow_registration %}| <a href="{% url 'registration_register' %}">register</a>{% endif %}
+                        {% else %}
+                            <a href="{% url 'profile' request.user.username %}">{{ request.user }}</a>{#({{ request.user.person.total_karma }})#}&nbsp;{%comment%}|&nbsp;<a
+                                href="{{ request.user.person.pending_action_url }}"
+                                class="icon-exclamation-sign pending-action-notification {% if request.user.person.has_pending_action %}pending-action-notification-active{% endif %}"
+                                title="{{ request.user.person.pending_action_name }}"></a>&nbsp;|&nbsp;<a
+                                href="{% url 'profile' request.user.username %}?type=reply"
+                                class="icon-envelope {% if request.user.person.unread_reply_count %}unread-icon{% endif %}"
+                                title="You have {{ request.user.person.unread_reply_count }} unread messages."></a>&nbsp;{%endcomment%}|&nbsp;<a
+                                href="{% url 'django.contrib.auth.views.logout' %}?next={{ request.path }}">logout</a>
+                        {% endif %}
+                    </div>
+                    <div class="clearboth"></div>
+                </div>
+            </div>
+            <!-- Begin page content -->
+            <div class="container row-fluid">
+                <div class="notifications">
+                    {% block cms-anonymous-notifications %}
+                        {% if not request.user.is_authenticated %}
+                            {% show_placeholder 'anonymous notifications' 'global-placeholders' %}
+                        {% endif %}
+                    {% endblock %}
+                    {% block cms-universal-notifications %}
+                        {% show_placeholder 'universal notifications' 'global-placeholders' %}
+                    {% endblock %}
+                </div>
+                {% block body %}{% endblock body %}
+            </div>
+            <div id="push"></div>
+        </div>
+        <div id="footer">
+            <div class="container">
+                <p class="muted credit">
+                    {% block footer %}
+                        {#Powered by <a href="http://github.com/chrisspen/issue-mapper">Issue Mapper</a>.#}
+                        {#user contributions licensed under cc-wiki with attribution required#}
+                        {#By using this site, you agree to the Terms of Use and Privacy Policy. #}
+                        {#Use of this Web site constitutes acceptance of our Terms and Conditions of Use and Privacy Policy.#}
+                        {#Use of this site constitutes acceptance of our User Agreement and Privacy Policy. © 2013 company inc. All rights reserved.#}
+                    {% endblock %}
+                    {% block cms-footer %}
+                        &copy; {% now "Y" %} {{ settings.SITE_NAME }}
+                        {% if settings.IM_USE_CMS %}
+                            | {% show_placeholder 'footer' 'global-placeholders' %}
+                        {% endif %}
+                    {% endblock %}
+                </p>
+            </div>
+        </div>
+        {% compressed_js 'all' %}
+<script type="text/javascript">
+window.issue_mapper.COOKIE_BUTTONS_FLOAT = '{{ c.COOKIE_BUTTONS_FLOAT }}';
+</script>
+        {% block body-js %}{% endblock %}
+        {% block google-analytics %}{% if settings.GA_CODE %}
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', '{{ settings.GA_CODE }}', '{{ settings.GA_DOMAIN }}');
+  ga('send', 'pageview');
+</script>
+        {% endif %}{% endblock %}
+    </body>
+</html>

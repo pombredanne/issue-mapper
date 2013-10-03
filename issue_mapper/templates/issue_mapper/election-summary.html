@@ -1,0 +1,23 @@
+{% load issue_mapper %}
+<div id="person-summary" class="well shadow person-summary-well" style="">
+    <legend>
+        {% adminlink election %}{{ election.name }}
+            <span class="muted">
+                -&nbsp;{{ election.election_date }}
+            </span>
+        {% endadminlink %}
+    </legend>
+    <div class="clearfix"></div>
+    <div class="person-summary-lower" style="display:none;">
+        <span class="span12">
+             {% for page_url, page_name in election.useful_links %}
+                 {% if not forloop.first %}|{% endif %} <a href="{{ page_url }}" target="_blank">{{ page_name }}</a>
+             {% endfor %}
+        </span>
+        <div class="clearfix"></div>
+    </div>
+    <div class="clearfix"></div>
+    <div class="person-summary-lower-toggle">
+        <i class="icon-chevron-down"></i><i class="icon-chevron-down"></i><i class="icon-chevron-down"></i>
+    </div>
+</div>

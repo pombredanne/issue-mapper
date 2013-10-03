@@ -1,0 +1,2 @@
+<div class="ajax-person-search-results ajax-search-results">{% if q %}{% for person in q %}<p><a cross-link-url="{% url 'link_cross_ajax' %}" person_id="{{ person.object.id }}" issue_id="" class="ajax-person-link ajax-link" href="{% if person.object.slug %}{% url 'person' person.object.slug %}{% else %}{% url 'person' person.id %}{% endif %}">{{ person.object.display_name }}</a></p>
+{% endfor %}{% else %}<p>No results.</p>{% endif %}</div>

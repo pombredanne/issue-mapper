@@ -1,0 +1,8 @@
+{% load i18n %}
+{% trans "Please click the following link to activate your account" %}:
+
+http://{{ site.domain }}{% url 'registration_activate' activation_key %}
+
+{% blocktrans %}This link is valid for {{ expiration_days }} days.{% endblocktrans %}
+
+{% blocktrans %}If you did not initiate this account activation, please disregard this email.{% endblocktrans %}

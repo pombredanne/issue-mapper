@@ -1,0 +1,8 @@
+{% if position %}
+    <span
+        class="position-sparkline"
+        data="{{ position.oppose_count }},{{ position.undecided_count }},{{ position.favor_count }}"
+        {#colors="#ff0000,#999999,#00ff00"#}
+        colors="#FF7C7C,#CECECE,#87FF87"
+    ></span>
+{% endif %}

@@ -1,0 +1,18 @@
+{% load urls %}
+<div class="pagination">
+    <span class="page-links">
+        {% if page.has_previous %}
+            <a href="{% add_params request.get_full_path page=page.previous_page_number %}"><i class="icon-arrow-left"></i> previous</a>
+        {% else %}
+            <span class="muted"><i class="icon-arrow-left"></i> previous</span>
+        {% endif %}
+        <span class="page-current">
+            {{ page.number }} of {{ page.paginator.num_pages }}
+        </span>
+        {% if page.has_next %}
+            <a href="{% add_params request.get_full_path page=page.next_page_number %}">next <i class="icon-arrow-right"></i></a>
+        {% else %}
+            <span class="muted">next <i class="icon-arrow-right"></i></span>
+        {% endif %}
+    </span>
+</div>

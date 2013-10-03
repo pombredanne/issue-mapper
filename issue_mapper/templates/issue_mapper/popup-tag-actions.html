@@ -1,0 +1,18 @@
+{% load issue_mapper %}
+<div style="text-align:center;" {% if not priviledges.can.vote_link %}class="readonly-votes"{% endif %}>
+    {% inline_voter obj %}
+    {% if priviledges.can.vote_link %}Is this tag correct?{% endif %}
+</div>
+{% if obj.person_issue_links %}
+    <ul class="popup-wrt-issue-links">
+    {% for issue_link in obj.person_issue_links %}
+        <li><a href="{% url 'issue_wrt_person' obj.person.slug issue_link.issue.slug %}" target="_blank">{{ issue_link.issue.friendly_text }}</a></li>
+    {% endfor %}
+    </ul>
+{% endif %}
+{% if obj.url and obj.person and priviledges.can.quote_person %}
+    {% if not obj.person_issue_links %}<br/>{% endif %}
+    <div class="hopup-quote-add">
+        <a href="#" data-reveal-id="{% url 'popup_ajax' 'url-add-quote' 'link' obj.id %}?url_id={{ obj.url.id }}&person_id={{ obj.person.id }}">Add quote from this URL</a>
+    </div>
+{% endif %}

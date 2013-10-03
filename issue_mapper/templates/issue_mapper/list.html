@@ -1,0 +1,393 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper urls %}
+{% block title %}
+    {% if title %}
+        {{ title }}
+    {% else %}
+        {% if link_filter %}
+            {{ link_filter.better_display_text }} - 
+            {% if link_filter.issue %}
+                {{ link_filter.issue.friendly_text_no_punct }}
+            {% else %}
+                {{ link_filter.person.display_name }}
+            {% endif %}
+        {% else %}
+            {{ selected_issue_type|title }} Issues
+        {% endif %}
+    {% endif %}
+{% endblock %}
+{% block body %}
+    <div class="issue-list span12 search-list search-list-{{ noun }}">
+        {% if link_filter %}
+            <div class="issue-container well shadow">
+                {% list_item link_filter person_filter %}
+                <div class="clearfix"></div>
+            </div>
+            <div>{%comment%}
+                <div style="float:left;">
+                {% if link_filter.issue and show_view_all_link %}
+                    <a href="{% url 'issue' link_filter.issue.slug %}"><i class="icon-chevron-left"></i> View all links for issue</a>&nbsp;
+                {% endif %}
+                {% if link_filter.person and show_view_all_link %}
+                    <a href="{% url 'person' person_filter.slug 'link' %}"><i class="icon-chevron-left"></i> View all links for {{ link_filter.person.display_name }}</a>&nbsp;
+                {% endif %}
+                </div>
+                {%endcomment%}
+                <div style="float:right;">
+                    {% if link_filter.person and link_filter.issue and priviledges.can.answer_issue_for_other %}
+                        <a href="{% url 'issue_wrt_person' link_filter.person.slug link_filter.issue.slug %}" class="btn submit-btn">
+                            What does {{ link_filter.person.display_name }} believe? <i class="icon-circle-arrow-right icon-white"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="clearfix"></div>
+            </div>
+        {% else %}
+
+            {% if issue_filter %}
+                {% issue_summary issue_filter person_filter %}
+            {% else %}
+                {% if person_filter %}
+                    {% person_summary person_filter %}
+                {% else %}
+                    {% if election_filter %}
+                        {% election_summary election_filter %}
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        
+        {%comment%}
+        {% if noun == 'link' and not link_filter and person_filter and show_view_all_link %}
+            <div>
+                <a href="{% url 'link_list' %}"><i class="icon-chevron-left"></i> View all links</a>
+                <br/>
+                <br/>
+            </div>
+        {% endif %}
+        
+        {% if noun == 'issue' and not link_filter and person_filter and show_view_all_link %}
+            <div>
+                <a href="{% url 'issue_list' %}"><i class="icon-chevron-left"></i> View all issues</a>
+                &nbsp;<a href="{% url 'person_list' %}"><i class="icon-chevron-left"></i> View all people</a>
+                <br/>
+                <br/>
+            </div>
+        {% endif %}
+        {% if noun == 'link' and not link_filter and not person_filter and show_view_all_link %}
+            <div>
+                <a href="{% url 'issue_list' %}"><i class="icon-chevron-left"></i> View all issues</a>
+                <br/>
+                <br/>
+            </div>
+        {% endif %}
+        {%endcomment%}
+        
+        {% if show_search_results %}
+            <h3>
+            
+                <a class="change-context-filter" data-url="{% url 'popup_ajax' 'context-search' %}" href="{% url 'contexts' %}"><span class="context-filter">{% if context_filter %}{{ context_filter.friendly_name|safe }}{% else %}All{% endif %}</span></a>&nbsp;&nbsp;|&nbsp;
+            
+                {#{% if page.has_previous or page.has_next %}{% pagination page %}{% endif %}#}
+                
+                {% if show_top_search_controls %}
+                    {% for qt_singular, qt, qs, q_link, selected in issue_types %}
+                        {% if not forloop.first %}|{% endif %}
+                        <span class="type-link"><a
+                            class="issue-type-link {% if selected %}selected{% endif %}"
+                            href="{% if q_link %}
+                                {{ q_link }}
+                            {% else %}
+                                {% if person_filter %}
+                                    {% url 'person' person_filter.slug qt_singular %}
+                                {% else %}
+                                    {% add_params request.get_full_path type=qt_singular q=q page=1 %}
+                                {% endif %}
+                            {% endif %}"
+                            issue-type="{{ qt }}">{{ qt }} ({{ qs.count }})</a></span>
+                    {% endfor %}
+                    {% if show_keyword_search %}
+                        <input
+                            id="keyword-search-box"
+                            type="text"
+                            size="30"
+                            placeholder="search for {{ noun }}"
+                            value="{{ q|noplus }}"
+                        />
+                    {% endif %}
+                    {% if users_online_count %}<span class="muted online-user-count">{{ users_online_count }} user{% plurals users_online_count %} online</span>{% endif %}
+                   
+                    {% for rss_title, rss_url in rss_urls %}
+                        &nbsp;<a
+                            title="{{ rss_title }}"
+                            href="{{ rss_url }}"><i class="icon-rss"></i> {{ rss_title }}</a>
+                    {% endfor %}
+                    
+                {% endif %}
+                
+                {%comment%}
+                <div style="float:right;">
+                    {% switch selected_issue_type %}
+                        {% case "person" %}
+                            {% if priviledges.can.submit_person %}
+                                <a href="{% url 'person_submit' %}" class="btn submit-btn">
+                                    Submit person <i class="icon-circle-arrow-right icon-white"></i>
+                                </a>
+                            {% endif %}
+                        {% case "issue" %}
+                            {% if priviledges.can.submit_issue %}
+                                <a href="{% url 'issue_submit' %}" class="btn submit-btn">
+                                    Submit issue <i class="icon-circle-arrow-right icon-white"></i>
+                                </a>
+                            {% endif %}
+                    {% endswitch %}
+                </div>
+                {%endcomment%}
+            </h3>
+
+            <div class="search-list-left comment-replies">
+            
+                {% if link_filter %}
+                    {% if request.user.is_authenticated %}
+                        {% comment_form link_filter %}
+                    {% else %}
+                        <a href="#" data-reveal-id="{% url 'login_register' %}">
+                            <input class="new-comment-submit-button btn" type="button" value="Submit Comment" />
+                        </a>
+                        <br/>
+                        <br/>
+                    {% endif %}
+                {% endif %}
+                
+                {% if page.object_list %}
+                    {% if random_new %}
+                        <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %} new-issue">
+                            <div class="span1a">
+                                <span title="{{ random_new.absolute_votes }}">new</span>
+                            </div>
+                            {% list_item random_new.object person_filter %}
+                            <div class="clearfix"></div>
+                        </div>
+                    {% endif %}
+                    {% for item in page.object_list %}
+                        <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %}{% if noun == 'reply' and item.object.unread %} unread-reply{{ item.object.mark_read }}{% endif %}">
+                            {% if noun != 'comment' and noun != 'reply' %}
+                                <div class="span1a">
+                                    <span {#title="{{ item.object.top_weight }}"#}>{% add page.start_index forloop.counter -1 %}</span>
+                                    {% if noun != 'person' %}
+                                        {#{% if person == creator %}{% position_sparkline item.last_position_of_current_user %}{% else %}#}
+                                        {% position_sparkline item person_filter %}
+                                        {#{% endif %}#}
+                                    {% endif %}
+                                    {% if noun == 'match' %}
+                                        <span class="match-percent">{{ item.value_percent|floatformat:0 }}%</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            {% switch selected_issue_type %}
+                                {% case "person" %}
+                                    {% lookup_candidate election_filter item.object 'candidate' %}
+                                    <a href="{% url 'person' item.object.slug %}?q=" target="_blank">
+                                        <div class="span1" style="text-align:center;">
+                                            {% person_photo item.object %}
+                                            <div class="clearfix"></div>
+                                        </div>
+                                    </a>
+                                    <div class="span10">
+                                        <a href="{% url 'person' item.object.slug %}?q=" target="_blank">
+                                            {% if item.object.slug %}
+                                                {{ item.object.display_name }}
+                                                <span class="muted">
+                                                    {{ item.object.last_term_title }}
+                                                    {% if item.object.has_current_user_match %}
+                                                        - <b>{{ item.object.current_user_match_percent|floatformat:0 }}%</b>
+                                                        across {{ item.object.current_user_match_issues.count }} issues
+                                                    {% endif %}
+                                                    {% if request.candidate %}
+                                                        &nbsp;-&nbsp;
+                                                        {{ request.candidate.party }}
+                                                        &nbsp;-&nbsp;
+                                                        running for {{ request.candidate.role|lower }}
+                                                    {% endif %}
+                                                    &nbsp;-&nbsp;{{ item.object.issue_link_count }}&nbsp;links
+                                                </span>
+                                                <br/><br/>
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                {% case "matches" %}
+                                    <div class="span1" style="text-align:center;">
+                                        {% person_photo item.matchee %}
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="span8">{% if item.matchee.slug %}
+                                        {{ item.matchee.display_name }}
+                                        <br/>
+                                        <div class="muted">based on {{ item.issue_count }} common issues</div>
+                                    {% endif %}</div>
+                                    <div class="span1" style="float:right; text-align:right;margin-top:35px;">
+                                        <a href="{% url 'person' item.matchee.slug %}?q=">
+                                            <button class="btn btn-primary">
+                                                View <i class="icon-angle-right icon-white"></i>
+                                            </button>
+                                        </a>
+                                    </div>
+                                {% case "link" %}
+                                    {% list_item item.object person_filter %}
+                                {% case "election" %}
+                                    {% list_item item.object person_filter %}
+                                {% case "comment" %}
+                                    {% list_item_comment item.object show_comment_replies %}
+                                {% case "reply" %}
+                                    {% list_item_comment item.object 0 %}
+                                {% else %}
+                                    <div class="span10" rand="{{ item.object.rand }}" style="width:88%;">
+                                        <div class="issue-link"><a href="{% if person_filter %}{% url 'issue_wrt_person' person_filter.slug item.object.slug %}{% else %}{% url 'issue' item.object.slug %}{% endif %}">{{ item.object.friendly_text }}</a></div>
+                                        <div class="issue-details">
+                                            {#<span>created {{ item.object.created|date:'DATETIME_FORMAT'|nbsp }} by {{ item.object.creator }}</span>#}
+                                        </div>
+                                        <div class="issue-details">
+                                            <span>
+                                                <b>{{ item.object.links.count }}</b>
+                                                link{% plurals item.object.links %} |
+                                                <b>{{ item.object.undeleted_positions.count }}</b>
+                                                stated position{% plurals item.object.positions %}
+                                                {% if item.object.current_user_position %}
+                                                    | you {{ item.object.current_user_position.polarity_infinitive }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                            {% endswitch %}
+                            <div class="clearfix"></div>
+                        </div>
+                    
+                    {% endfor %}
+                {% else %}
+                    <div class="muted">No records found.</div>
+                {% endif %}
+                <div class="clearfix"></div>
+            </div>
+            <div class="search-list-right">
+                {% if creator %}
+                    <div class="profile-summary">
+                        <h3>
+                            <b>{{ creator.user.username }}</b>
+                            &nbsp;{% if creator.user.is_staff %}<i class="icon-star-empty" title="staff" alt="staff"></i>{% endif %}
+                        </h3>
+                        <div class="muted">joined {{ creator.created|pretty_date }}</div>
+                        <br/>
+                        <div class="karma-count"><b>{{ creator.visible_link_karma }}</b> link karma</div>
+                        <div class="karma-count"><b>{{ creator.visible_issue_karma }}</b> issue karma</div>
+                        <div class="karma-count"><b>{{ creator.visible_comment_karma }}</b> comment karma</div>
+                        <br/>
+                        <div><a href="{% url 'django.contrib.auth.views.password_reset' %}">Reset Password</a></div>
+                        <div><a href="{% url 'user_privilege' creator.user.username %}">Privileges</a></div>
+                    </div>
+                {% endif %}
+                
+                {% if priviledges.can.answer_issue_for_themself and current_person.has_unpositioned_issues %}
+                    <a href="{% url 'issue_list' %}?positioned=false"
+                        class="btn btn-primary full-width-sidebar-btn">
+                        State Your Position <i class="icon-circle-arrow-right icon-white"></i>
+                    </a>
+                {% endif %}
+                {% if selected_issue_type == 'link' and priviledges.can.submit_link %}
+                    <button
+                        type="submit"
+                        class="btn full-width-sidebar-btn"
+                        data-reveal-id="{% url 'popup_ajax' 'link-add' %}?issue_id={{ issue_filter.id }}&person_id={{ person_filter.id }}&context_id={{ context_filter.id }}&context={{ context_filter.name }}">
+                        Submit link <i class="icon-circle-arrow-right icon-white"></i>
+                    </button>
+                {% endif %}
+                
+                {% if sort_options %}
+                    <div class="filter-section shadow">
+                        <label for="id_sort">Sort by</label>
+                        <select id="id_sort" name="sort">
+                            {% for sortv,sortk in sort_options %}
+                                <option
+                                    {% if sort == sortv %}selected="selected"{% endif %}
+                                    value="{{ sortv }}"
+                                    url="{% add_params request.get_full_path sort=sortv %}" />{{ sortk }}
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                
+                {#{% if noun == 'person' %}#}
+                {% if form %}
+                    {% for field in form %}
+                        <div class="filter-section shadow">
+                            {{ field.label_tag }}
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                    <a id="update-search-results" class="btn full-width-sidebar-btn" href="#">Update Results</a>
+                {% endif %}
+                {% if noun == 'comment' and link_filter %}
+                    <div class="cross-link-person cross-links">
+                        <h3>Discuss Person</h3>
+                        <div class="muted">
+                            {#<span class="cross-link-label">Discuss this link in regards to person:</span>#}
+                            <input
+                                id="cross-link-person"
+                                link_id="{{ link_filter.id }}"
+                                person_id="{{ person_filter.id }}"
+                                issue_id="{{ issue_filter.id }}"
+                                type="text"
+                                url="{% url 'person_search' %}"
+                                placeholder="search person's name"
+                            />
+                        </div>
+                        {#{% if link_filter.similar_person_links %}#}
+                            <ul>
+                                {% for other_link in link_filter.similar_person_links|slice:":10" %}
+                                    <li><a href="{% url 'person_link' other_link.person.slug other_link.id %}">{{ other_link.person.display_name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        {#{% else %}#}
+                            {#<div class="muted">None</div><br/>#}
+                        {#{% endif %}#}
+                    </div>
+                    <div class="cross-link-person-issue cross-links">
+                        <h3>Discuss Person on Issue</h3>
+                        <ul>
+                        {% for other_link in link_filter.similar_person_issue_links|slice:":10" %}
+                            <li><a href="{% url 'person_link' other_link.person.slug other_link.id %}">{{ other_link.person.display_name }} on "{{ other_link.issue.friendly_text_no_punct }}"</a></li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="cross-link-issue cross-links">
+                        <h3>Discuss Issue</h3>
+                        <div class="muted">
+                            {#<span class="cross-link-label">Discuss this link in regards to issue:</span>#}
+                            <input
+                                id="cross-link-issue"
+                                link_id="{{ link_filter.id }}"
+                                person_id="{{ person_filter.id }}"
+                                issue_id="{{ issue_filter.id }}"
+                                type="text"
+                                url="{% url 'issue_search' %}"
+                                placeholder="search issue title"
+                            />
+                        </div>
+                        <ul>
+                        {% for other_link in link_filter.similar_issue_links|slice:":10" %}
+                            <li><a href="{% url 'issue_link' other_link.issue.slug other_link.id %}">{{ other_link.issue.friendly_text }}</a></li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="clearfix"></div>
+        
+            {% if page.has_previous or page.has_next %}{% pagination page %}{% endif %}
+        {% else %}
+            {% if person_filter and not person_filter.active %}
+                <p class="centered">This person is not active.</p>
+            {% endif %}
+        {% endif %}
+        
+    </div>
+{% endblock %}

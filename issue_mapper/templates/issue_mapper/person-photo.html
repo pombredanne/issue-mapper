@@ -1,0 +1,17 @@
+<a class="photo-link" href="{{ person.get_absolute_url }}">
+	{% if person.photo_thumbnail %}
+	    <img
+	        src="{{ person.photo_thumbnail.url }}"
+	        style="max-width:{{ max_width }}px;max-height:{{ max_height }}px;"
+	        class="shadow"
+	        alt="{{ person.display_name }}"
+	        title="{{ person.display_name }}"
+	    />
+	{% else %}
+	    <i
+	        class="icon-user missing-photo"
+	        alt="No photo available."
+	        title="No photo available."
+	        style="max-width:{{ max_width }}px;max-height:{{ max_height }}px;"></i>
+	{% endif %}
+</a>

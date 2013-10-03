@@ -1,0 +1,17 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block body %}
+    <fieldset>
+        <legend>{% trans 'Contexts' %}</legend>
+        <table>
+            {% for context in contexts %}
+                <tr>
+                    <td class="context-filter-tag"><a href="/c/{{ context.slug }}/">{{ context.friendly_name|safe }}</a></td>
+                    <td>&nbsp;</td>
+                    <td>{{ context.friendly_description }} ({{ context.urlcontext_set.all.count }})</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <br/>
+    </fieldset>
+{% endblock %}

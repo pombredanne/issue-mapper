@@ -1,0 +1,11 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block title %}Activation Complete{% endblock %}
+{% block body %}
+    <div class="content">
+        <fieldset>
+            <legend>{% trans "Your account is now active!" %}</legend>
+            <p>Please <a href="{% url 'django.contrib.auth.views.login' %}">login</a>.</p>
+        </fieldset>
+    </div>
+{% endblock %}
