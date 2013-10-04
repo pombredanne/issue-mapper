@@ -11,7 +11,7 @@
 	        </span>
 	        {% if request.user.is_authenticated and priviledges.can.flag_person %}
 	            &nbsp;<i
-	                class="glyphicon-flag {% if person.flagged %}flagged{% endif %}"
+	                class="icon-flag {% if person.flagged %}flagged{% endif %}"
 	                {% if person.flagged %}
 	                    alt="You flagged this issue for moderation or removal."
 	                    title="You flagged this issue for moderation or removal."
@@ -43,6 +43,6 @@
     </div>
     <div class="clearfix"></div>
     <div class="person-summary-lower-toggle">
-        <i class="glyphicon-chevron-down"></i><i class="glyphicon-chevron-down"></i><i class="glyphicon-chevron-down"></i>
+        <i class="icon-chevron-down"></i><i class="icon-chevron-down"></i><i class="icon-chevron-down"></i>
     </div>
 </div>

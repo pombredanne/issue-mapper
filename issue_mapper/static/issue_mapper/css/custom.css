@@ -301,10 +301,15 @@ button[value=save]{
     /*border-bottom:1px dashed #ddd;*/
     padding-top:10px;
     padding-bottom:10px;
-    padding-left:0;
+    padding-left:15px;
     padding-right:0;
     margin-left:0;
     margin-right:0;
+}
+.issue-container .col-md-1,
+.issue-container .col-md-10,
+.issue-container .col-md-11{
+    padding-left:0px;
 }
 .issue-container .col-md-1a{
     color:#999;
@@ -314,6 +319,9 @@ button[value=save]{
 }
 .issue-container .span10{
     margin-left:30px;
+}
+.issue-container .col-md-voter i.vote-link{
+    /*display:block;*/
 }
 .search-list{
     padding:0;
@@ -982,6 +990,10 @@ dl{
     margin-left: 5px;
     width: 48%;
 }
+.popup-body input.form-control,
+.popup-body textarea.form-control{
+    margin-bottom:5px;
+}
 .slide-out-options{
     position: relative;
     text-align: center;
@@ -1414,12 +1426,16 @@ select[multiple=multiple]{
 }
 #update-search-results,
 a.full-width-sidebar-btn{
-    width: 215px;
+    width: 100%;
     margin-bottom:10px;
 }
 button.full-width-sidebar-btn{
-    width: 240px;
+    width: 100%;
     margin-bottom:10px;
+    color:white;
+}
+button.full-width-sidebar-btn:hover{
+    color:black;
 }
 /* Force footer to bottom of page if not enough content. */
 body.footer-fixed{
@@ -1485,4 +1501,7 @@ a:hover .context-filter{
 }
 .muted{
     color:#999;
+}
+.issue-summary{
+    margin-right:15px;
 }

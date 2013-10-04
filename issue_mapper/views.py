@@ -2124,10 +2124,7 @@ class PersonListView(BaseListViewSimple):
 
     @property
     def show_comments(self):
-        election_filter = self.election_filter
-        if election_filter:
-            return False
-        return True
+        return False
     
     @property
     def show_elections(self):
@@ -2182,6 +2179,10 @@ class IssueListView(BaseListViewSimple):
     show_people = True
     
     @property
+    def title(self):
+        return 'Issues'
+    
+    @property
     def type(self):
         return c.ISSUE
     
@@ -2202,9 +2203,11 @@ class LinkListView(BaseListViewSimple):
     show_view_all_link = False
     
     show_people = True
-    
-    title = settings.IM_SUBTITLE
 
+    @property
+    def title(self):
+        return 'Links'
+    
     @property
     def type(self):
         return c.LINK
@@ -2234,9 +2237,11 @@ class ElectionListView(BaseListViewSimple):
     show_view_all_link = False
     
     show_people = True
-    
-    title = settings.IM_SUBTITLE
 
+    @property
+    def title(self):
+        return 'Elections'
+    
     @property
     def type(self):
         return c.ELECTION

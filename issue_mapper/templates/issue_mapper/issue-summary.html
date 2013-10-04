@@ -6,7 +6,7 @@
     <br/>
 {% endif %}
 <form method="POST" action="">
-    <div id="issue-container" class="well shadow">
+    <div id="issue-container" class="well shadow issue-summary">
         {% if form.person.real %}
             <div class="col-md-1">{% person_photo form.person %}</div>
         {% endif %}
@@ -91,7 +91,7 @@
                 {% endif %}
                 {% if request.user.is_authenticated and priviledges.can.flag_issue %}
                     | <i
-                        class="glyphicon-flag {% if form.issue.flagged %}flagged{% endif %}"
+                        class="icon-flag {% if form.issue.flagged %}flagged{% endif %}"
                         {% if form.issue.flagged %}
                             alt="You flagged this issue for moderation or removal."
                             title="You flagged this issue for moderation or removal."

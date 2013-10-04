@@ -8,8 +8,8 @@
                     <span class="comment-error" style="color:red;display:none;"></span>
                     <input name="url_id" type="hidden" value="{{ request.GET.url_id }}" />
                     <input name="person_id" type="hidden" value="{{ request.GET.person_id }}" />
-                    <textarea name="text" placeholder="Enter quote here. Do not include quotation marks."></textarea>
-                    <input name="dt" type="text" value="" placeholder="yyyy-mm-dd" /> <span class="muted">&nbsp;the date first published</span>
+                    <textarea class="form-control" name="text" placeholder="Enter quote here. Do not include quotation marks."></textarea>
+                    <input class="form-control" name="dt" type="text" value="" placeholder="yyyy-mm-dd" /> <span class="muted">&nbsp;the date first published</span>
                 </p>
                 <div class="actions centered">
                     <input
@@ -17,7 +17,7 @@
                         class="btn btn-primary yes-button"
                         value="Add Quote" />&nbsp;<input
                         type="submit"
-                        class="btn no-button"
+                        class="btn btn-default no-button"
                         value="Cancel" />
                 </div>
             </form>

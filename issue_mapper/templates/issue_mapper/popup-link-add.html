@@ -9,17 +9,17 @@
                     <input name="issue_id" type="hidden" value="{{ request.GET.issue_id }}" />
                     <input name="person_id" type="hidden" value="{{ request.GET.person_id }}" />
                     <input name="context_id" type="hidden" value="{{ request.GET.context_id }}" />
-                    <input name="context" type="text" placeholder="country or state" style="width:100%;" value="{{ request.GET.context }}" />
-                    <input name="url" type="text" placeholder="url" style="width:100%;" />
+                    <input class="form-control" name="context" type="text" placeholder="country or state" style="width:100%;" value="{{ request.GET.context }}" />
+                    <input class="form-control" name="url" type="text" placeholder="url" style="width:100%;" />
                 </p>
                 <div class="actions centered">
                     <input
                         type="submit"
                         class="btn btn-primary yes-button"
-                        value="Submit" />
+                        value="Submit" />&nbsp;
                     <input
                         type="submit"
-                        class="btn no-button"
+                        class="btn btn-default no-button"
                         value="Cancel" />
                 </div>
             </form>

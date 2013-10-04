@@ -37,10 +37,10 @@
                         {% else %}
                             <a href="{% url 'profile' request.user.username %}">{{ request.user }}</a>{#({{ request.user.person.total_karma }})#}&nbsp;{%comment%}|&nbsp;<a
                                 href="{{ request.user.person.pending_action_url }}"
-                                class="glyphicon-exclamation-sign pending-action-notification {% if request.user.person.has_pending_action %}pending-action-notification-active{% endif %}"
+                                class="icon-exclamation-sign pending-action-notification {% if request.user.person.has_pending_action %}pending-action-notification-active{% endif %}"
                                 title="{{ request.user.person.pending_action_name }}"></a>&nbsp;|&nbsp;<a
                                 href="{% url 'profile' request.user.username %}?type=reply"
-                                class="glyphicon-envelope {% if request.user.person.unread_reply_count %}unread-icon{% endif %}"
+                                class="icon-envelope {% if request.user.person.unread_reply_count %}unread-icon{% endif %}"
                                 title="You have {{ request.user.person.unread_reply_count }} unread messages."></a>&nbsp;{%endcomment%}|&nbsp;<a
                                 href="{% url 'django.contrib.auth.views.logout' %}?next={{ request.path }}">logout</a>
                         {% endif %}

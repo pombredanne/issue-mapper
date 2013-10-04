@@ -15,10 +15,10 @@
             <span>created {{ item.object.created|date:'DATETIME_FORMAT'|nbsp }} by {{ item.object.creator }}</span>
             <ul class="tags">
                 {% if item.object.person %}
-	                <li><a href="{{ item.object.person.get_absolute_url }}"><i class="glyphicon-user"></i>&nbsp;{{ item.object.person.display_name }}</a></li>
+	                <li><a href="{{ item.object.person.get_absolute_url }}"><i class="icon-user"></i>&nbsp;{{ item.object.person.display_name }}</a></li>
 	            {% endif %}
                 {% if item.object.issue %}
-                    <li><a href="{{ item.object.issue.get_absolute_url }}"><i class="glyphicon-info-sign"></i>&nbsp;{{ item.object.issue.friendly_text_no_punct }}</a></li>
+                    <li><a href="{{ item.object.issue.get_absolute_url }}"><i class="icon-info-sign"></i>&nbsp;{{ item.object.issue.friendly_text_no_punct }}</a></li>
                 {% endif %}
             </ul>
         </div>

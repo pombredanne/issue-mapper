@@ -19,7 +19,7 @@
 			                {% if priviledges.can.submit_person %}
 				                <a href="{% url 'person_submit' %}">
 					                <button type="submit" class="btn btn-primary">
-									    Submit person <i class="glyphicon-circle-arrow-right icon-white"></i>
+									    Submit person <i class="icon-circle-arrow-right icon-white"></i>
 									</button>
 				                </a>
 			                {% endif %}
@@ -27,7 +27,7 @@
 	                        {% if priviledges.can.submit_issue %}
 	                            <a href="{% url 'issue_submit' %}">
 	                                <button type="submit" class="btn btn-primary">
-	                                    Submit issue <i class="glyphicon-circle-arrow-right icon-white"></i>
+	                                    Submit issue <i class="icon-circle-arrow-right icon-white"></i>
 	                                </button>
 	                            </a>
 	                        {% endif %}
@@ -35,7 +35,7 @@
 	                        {% if priviledges.can.submit_link %}
 	                            <a href="{% url 'link_submit' %}">
 	                                <button type="submit" class="btn btn-primary">
-	                                    Submit link <i class="glyphicon-circle-arrow-right icon-white"></i>
+	                                    Submit link <i class="icon-circle-arrow-right icon-white"></i>
 	                                </button>
 	                            </a>
 	                        {% endif %}
@@ -80,7 +80,7 @@
 	                            {% adminlink item.object 'last_name' %}{{ item.object.display_name }}{% endadminlink %}
 	                            <span class="muted">{{ item.object.last_term_title }}</span><br/><br/>
 					                <button class="btn btn-primary">
-					                    View <i class="glyphicon-angle-right icon-white"></i>
+					                    View <i class="icon-angle-right icon-white"></i>
 					                </button>
 	                        {% endif %}</div>
                             </a>
@@ -97,7 +97,7 @@
                             <div class="col-md-1" style="float:right; text-align:right;margin-top:35px;">
                                 <a href="{% url 'person' item.matchee.slug %}?q=">
                                     <button class="btn btn-primary">
-                                        View <i class="glyphicon-angle-right icon-white"></i>
+                                        View <i class="icon-angle-right icon-white"></i>
                                     </button>
                                 </a>
                             </div>

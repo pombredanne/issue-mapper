@@ -9,7 +9,7 @@
                     <input name="url_id" type="hidden" value="{{ request.GET.url_id }}" />
                     <input name="url_context_id" type="hidden" value="{{ request.GET.url_context_id }}" />
                     <input name="person_id" type="hidden" value="" />
-                    <input name="person" type="text" placeholder="search for person" style="width:100%;" />
+                    <input class="form-control" name="person" type="text" placeholder="search for person" style="width:100%;" />
                 </p>
                 <div class="actions centered">
                     <input
@@ -17,7 +17,7 @@
                         class="btn btn-primary yes-button"
                         value="Add Tag" />&nbsp;<input
                         type="submit"
-                        class="btn no-button"
+                        class="btn btn-default no-button"
                         value="Cancel" />
                 </div>
             </form>
