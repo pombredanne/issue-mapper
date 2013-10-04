@@ -2,7 +2,7 @@
 {% load issue_mapper urls %}
 {% block title %}Home - {{ selected_issue_type|title }} Issues{% endblock %}
 {% block body %}
-    <div class="motion-list span12 ">
+    <div class="motion-list col-md-12 ">
         
         
         {% if show_search_results %}
@@ -19,7 +19,7 @@
 			                {% if priviledges.can.submit_person %}
 				                <a href="{% url 'person_submit' %}">
 					                <button type="submit" class="btn btn-primary">
-									    Submit person <i class="icon-circle-arrow-right icon-white"></i>
+									    Submit person <i class="glyphicon-circle-arrow-right icon-white"></i>
 									</button>
 				                </a>
 			                {% endif %}
@@ -27,7 +27,7 @@
 	                        {% if priviledges.can.submit_issue %}
 	                            <a href="{% url 'issue_submit' %}">
 	                                <button type="submit" class="btn btn-primary">
-	                                    Submit issue <i class="icon-circle-arrow-right icon-white"></i>
+	                                    Submit issue <i class="glyphicon-circle-arrow-right icon-white"></i>
 	                                </button>
 	                            </a>
 	                        {% endif %}
@@ -35,7 +35,7 @@
 	                        {% if priviledges.can.submit_link %}
 	                            <a href="{% url 'link_submit' %}">
 	                                <button type="submit" class="btn btn-primary">
-	                                    Submit link <i class="icon-circle-arrow-right icon-white"></i>
+	                                    Submit link <i class="glyphicon-circle-arrow-right icon-white"></i>
 	                                </button>
 	                            </a>
 	                        {% endif %}
@@ -56,7 +56,7 @@
             <div class="search-list-left">
 		    {% for item in page.object_list %}
 		        <div class="issue-container well shadow">
-		            <div class="span1a">
+		            <div class="col-md-1">
 		                <span title="{{ item.object.top_weight }}">{% add page.start_index forloop.counter -1 %}</span>
 		                {% if noun != 'person' and selected_issue_type == 'answered' %}
 		                    {% if person == creator %}
@@ -72,37 +72,37 @@
                     {% switch selected_issue_type %}
                         {% case "person" %}
                             <a href="{% url 'person' item.object.slug %}?q=" target="_blank">
-	                        <div class="span1" style="text-align:center;">
+	                        <div class="col-md-1" style="text-align:center;">
 	                            {% person_photo item.object %}
 	                            <div class="clearfix"></div>
 	                        </div>
-	                        <div class="span10">{% if item.object.slug %}
+	                        <div class="col-md-10">{% if item.object.slug %}
 	                            {% adminlink item.object 'last_name' %}{{ item.object.display_name }}{% endadminlink %}
 	                            <span class="muted">{{ item.object.last_term_title }}</span><br/><br/>
 					                <button class="btn btn-primary">
-					                    View <i class="icon-angle-right icon-white"></i>
+					                    View <i class="glyphicon-angle-right icon-white"></i>
 					                </button>
 	                        {% endif %}</div>
                             </a>
                         {% case "matches" %}
-                            <div class="span1" style="text-align:center;">
+                            <div class="col-md-1" style="text-align:center;">
                                 {% person_photo item.matchee %}
                                 <div class="clearfix"></div>
                             </div>
-                            <div class="span8">{% if item.matchee.slug %}
+                            <div class="col-md-8">{% if item.matchee.slug %}
                                 {{ item.matchee.display_name }}
                                 <br/>
                                 <div class="muted">based on {{ item.issue_count }} common issues</div>
                             {% endif %}</div>
-                            <div class="span1" style="float:right; text-align:right;margin-top:35px;">
+                            <div class="col-md-1" style="float:right; text-align:right;margin-top:35px;">
                                 <a href="{% url 'person' item.matchee.slug %}?q=">
                                     <button class="btn btn-primary">
-                                        View <i class="icon-angle-right icon-white"></i>
+                                        View <i class="glyphicon-angle-right icon-white"></i>
                                     </button>
                                 </a>
                             </div>
                         {% case "link" %}
-                            <div class="span10">
+                            <div class="col-md-10">
                                 <div class="issue-link"><a href="{{ item.object.url.url }}" target="_blank">{{ item.object.better_display_text|safe }}</a></div>
                                 <div class="issue-details">
                                     <span>created {{ item.object.created|date:'DATETIME_FORMAT'|nbsp }} by {{ item.object.creator }}
@@ -119,7 +119,7 @@
                                 </div>
                             </div>
                         {% else %}
-				            <div class="span10" rand="{{ item.object.rand }}">
+				            <div class="col-md-10" rand="{{ item.object.rand }}">
 					            <div class="issue-link"><a href="{% if person_filter %}{% url 'issue_wrt_person' person_filter.slug item.object.slug %}{% else %}{% url 'issue' item.object.slug %}{% endif %}">{{ item.object.friendly_text }}</a></div>
 					            <div class="issue-details">
 					                <span>created {{ item.object.created|date:'DATETIME_FORMAT'|nbsp }} by {{ item.object.creator }}</span>

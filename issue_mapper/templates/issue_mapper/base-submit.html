@@ -13,12 +13,12 @@
             {% csrf_token %}
             <fieldset>
                 <legend>Submit {{ noun|title }}</legend>
-                <div class="row-fluid" id="search-results-section" style="display:none;">
+                <div class="row" id="search-results-section" style="display:none;">
                     <h4>Do any of these match your {{ noun }}?</h4>
                     <div id="search-results"></div>
                 </div>
-                <div class="row-fluid">
-                    <div class="span12">{% block form-fields %}
+                <div class="row">
+                    <div class="col-md-12">{% block form-fields %}
                         {% for field in form %}
                             {% include 'registration/form_field.html' %}
                         {% endfor %}{% endblock %}

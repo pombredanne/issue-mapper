@@ -17,7 +17,7 @@
     {% endif %}
 {% endblock %}
 {% block body %}
-    <div class="issue-list span12 search-list search-list-{{ noun }}">
+    <div class="col-md-12 search-list search-list-{{ noun }}">
         {% if link_filter %}
             <div class="issue-container well shadow">
                 {% list_item link_filter person_filter %}
@@ -26,17 +26,17 @@
             <div>{%comment%}
                 <div style="float:left;">
                 {% if link_filter.issue and show_view_all_link %}
-                    <a href="{% url 'issue' link_filter.issue.slug %}"><i class="icon-chevron-left"></i> View all links for issue</a>&nbsp;
+                    <a href="{% url 'issue' link_filter.issue.slug %}"><i class="glyphicon-chevron-left"></i> View all links for issue</a>&nbsp;
                 {% endif %}
                 {% if link_filter.person and show_view_all_link %}
-                    <a href="{% url 'person' person_filter.slug 'link' %}"><i class="icon-chevron-left"></i> View all links for {{ link_filter.person.display_name }}</a>&nbsp;
+                    <a href="{% url 'person' person_filter.slug 'link' %}"><i class="glyphicon-chevron-left"></i> View all links for {{ link_filter.person.display_name }}</a>&nbsp;
                 {% endif %}
                 </div>
                 {%endcomment%}
                 <div style="float:right;">
                     {% if link_filter.person and link_filter.issue and priviledges.can.answer_issue_for_other %}
                         <a href="{% url 'issue_wrt_person' link_filter.person.slug link_filter.issue.slug %}" class="btn submit-btn">
-                            What does {{ link_filter.person.display_name }} believe? <i class="icon-circle-arrow-right icon-white"></i>
+                            What does {{ link_filter.person.display_name }} believe? <i class="glyphicon-circle-arrow-right icon-white"></i>
                         </a>
                     {% endif %}
                 </div>
@@ -60,7 +60,7 @@
         {%comment%}
         {% if noun == 'link' and not link_filter and person_filter and show_view_all_link %}
             <div>
-                <a href="{% url 'link_list' %}"><i class="icon-chevron-left"></i> View all links</a>
+                <a href="{% url 'link_list' %}"><i class="glyphicon-chevron-left"></i> View all links</a>
                 <br/>
                 <br/>
             </div>
@@ -68,15 +68,15 @@
         
         {% if noun == 'issue' and not link_filter and person_filter and show_view_all_link %}
             <div>
-                <a href="{% url 'issue_list' %}"><i class="icon-chevron-left"></i> View all issues</a>
-                &nbsp;<a href="{% url 'person_list' %}"><i class="icon-chevron-left"></i> View all people</a>
+                <a href="{% url 'issue_list' %}"><i class="glyphicon-chevron-left"></i> View all issues</a>
+                &nbsp;<a href="{% url 'person_list' %}"><i class="glyphicon-chevron-left"></i> View all people</a>
                 <br/>
                 <br/>
             </div>
         {% endif %}
         {% if noun == 'link' and not link_filter and not person_filter and show_view_all_link %}
             <div>
-                <a href="{% url 'issue_list' %}"><i class="icon-chevron-left"></i> View all issues</a>
+                <a href="{% url 'issue_list' %}"><i class="glyphicon-chevron-left"></i> View all issues</a>
                 <br/>
                 <br/>
             </div>
@@ -107,8 +107,9 @@
                             issue-type="{{ qt }}">{{ qt }} ({{ qs.count }})</a></span>
                     {% endfor %}
                     {% if show_keyword_search %}
-                        <input
+                        &nbsp;&nbsp;&nbsp;<input
                             id="keyword-search-box"
+                            class="form-control input-sm"
                             type="text"
                             size="30"
                             placeholder="search for {{ noun }}"
@@ -120,7 +121,7 @@
                     {% for rss_title, rss_url in rss_urls %}
                         &nbsp;<a
                             title="{{ rss_title }}"
-                            href="{{ rss_url }}"><i class="icon-rss"></i> {{ rss_title }}</a>
+                            href="{{ rss_url }}"><i class="glyphicon-rss"></i> {{ rss_title }}</a>
                     {% endfor %}
                     
                 {% endif %}
@@ -131,13 +132,13 @@
                         {% case "person" %}
                             {% if priviledges.can.submit_person %}
                                 <a href="{% url 'person_submit' %}" class="btn submit-btn">
-                                    Submit person <i class="icon-circle-arrow-right icon-white"></i>
+                                    Submit person <i class="glyphicon-circle-arrow-right icon-white"></i>
                                 </a>
                             {% endif %}
                         {% case "issue" %}
                             {% if priviledges.can.submit_issue %}
                                 <a href="{% url 'issue_submit' %}" class="btn submit-btn">
-                                    Submit issue <i class="icon-circle-arrow-right icon-white"></i>
+                                    Submit issue <i class="glyphicon-circle-arrow-right icon-white"></i>
                                 </a>
                             {% endif %}
                     {% endswitch %}
@@ -145,7 +146,7 @@
                 {%endcomment%}
             </h3>
 
-            <div class="search-list-left comment-replies">
+            <div class="search-list-left comment-replies col-md-9">
             
                 {% if link_filter %}
                     {% if request.user.is_authenticated %}
@@ -162,18 +163,18 @@
                 {% if page.object_list %}
                     {% if random_new %}
                         <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %} new-issue">
-                            <div class="span1a">
-                                <span title="{{ random_new.absolute_votes }}">new</span>
-                            </div>
+                            {#<div class="col-md-1"><span title="{{ random_new.absolute_votes }}">new</span></div>#}
                             {% list_item random_new.object person_filter %}
                             <div class="clearfix"></div>
                         </div>
                     {% endif %}
                     {% for item in page.object_list %}
                         <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %}{% if noun == 'reply' and item.object.unread %} unread-reply{{ item.object.mark_read }}{% endif %}">
+                        
+                            {% comment %}
                             {% if noun != 'comment' and noun != 'reply' %}
-                                <div class="span1a">
-                                    <span {#title="{{ item.object.top_weight }}"#}>{% add page.start_index forloop.counter -1 %}</span>
+                                <div class="col-md-1">
+                                    {#<span>{% add page.start_index forloop.counter -1 %}</span>#}
                                     {% if noun != 'person' %}
                                         {#{% if person == creator %}{% position_sparkline item.last_position_of_current_user %}{% else %}#}
                                         {% position_sparkline item person_filter %}
@@ -184,16 +185,18 @@
                                     {% endif %}
                                 </div>
                             {% endif %}
+                            {% endcomment %}
+                            
                             {% switch selected_issue_type %}
                                 {% case "person" %}
                                     {% lookup_candidate election_filter item.object 'candidate' %}
-                                    <a href="{% url 'person' item.object.slug %}?q=" target="_blank">
-                                        <div class="span1" style="text-align:center;">
-                                            {% person_photo item.object %}
-                                            <div class="clearfix"></div>
-                                        </div>
-                                    </a>
-                                    <div class="span10">
+                                    <div class="col-md-2" style="text-align:center;">
+                                        {#<a href="{% url 'person' item.object.slug %}?q=" target="_blank">#}
+                                        {% person_photo item.object %}
+                                        {#</a>#}
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="col-md-10">
                                         <a href="{% url 'person' item.object.slug %}?q=" target="_blank">
                                             {% if item.object.slug %}
                                                 {{ item.object.display_name }}
@@ -216,19 +219,19 @@
                                         </a>
                                     </div>
                                 {% case "matches" %}
-                                    <div class="span1" style="text-align:center;">
+                                    <div class="col-md-1" style="text-align:center;">
                                         {% person_photo item.matchee %}
                                         <div class="clearfix"></div>
                                     </div>
-                                    <div class="span8">{% if item.matchee.slug %}
+                                    <div class="col-md-8">{% if item.matchee.slug %}
                                         {{ item.matchee.display_name }}
                                         <br/>
                                         <div class="muted">based on {{ item.issue_count }} common issues</div>
                                     {% endif %}</div>
-                                    <div class="span1" style="float:right; text-align:right;margin-top:35px;">
+                                    <div class="col-md-1" style="float:right; text-align:right;margin-top:35px;">
                                         <a href="{% url 'person' item.matchee.slug %}?q=">
                                             <button class="btn btn-primary">
-                                                View <i class="icon-angle-right icon-white"></i>
+                                                View <i class="glyphicon-angle-right icon-white"></i>
                                             </button>
                                         </a>
                                     </div>
@@ -241,7 +244,7 @@
                                 {% case "reply" %}
                                     {% list_item_comment item.object 0 %}
                                 {% else %}
-                                    <div class="span10" rand="{{ item.object.rand }}" style="width:88%;">
+                                    <div class="col-md-10" rand="{{ item.object.rand }}">
                                         <div class="issue-link"><a href="{% if person_filter %}{% url 'issue_wrt_person' person_filter.slug item.object.slug %}{% else %}{% url 'issue' item.object.slug %}{% endif %}">{{ item.object.friendly_text }}</a></div>
                                         <div class="issue-details">
                                             {#<span>created {{ item.object.created|date:'DATETIME_FORMAT'|nbsp }} by {{ item.object.creator }}</span>#}
@@ -268,12 +271,12 @@
                 {% endif %}
                 <div class="clearfix"></div>
             </div>
-            <div class="search-list-right">
+            <div class="search-list-right col-md-3">
                 {% if creator %}
                     <div class="profile-summary">
                         <h3>
                             <b>{{ creator.user.username }}</b>
-                            &nbsp;{% if creator.user.is_staff %}<i class="icon-star-empty" title="staff" alt="staff"></i>{% endif %}
+                            &nbsp;{% if creator.user.is_staff %}<i class="glyphicon-star-empty" title="staff" alt="staff"></i>{% endif %}
                         </h3>
                         <div class="muted">joined {{ creator.created|pretty_date }}</div>
                         <br/>
@@ -289,7 +292,7 @@
                 {% if priviledges.can.answer_issue_for_themself and current_person.has_unpositioned_issues %}
                     <a href="{% url 'issue_list' %}?positioned=false"
                         class="btn btn-primary full-width-sidebar-btn">
-                        State Your Position <i class="icon-circle-arrow-right icon-white"></i>
+                        State Your Position <i class="glyphicon-circle-arrow-right icon-white"></i>
                     </a>
                 {% endif %}
                 {% if selected_issue_type == 'link' and priviledges.can.submit_link %}
@@ -297,14 +300,14 @@
                         type="submit"
                         class="btn full-width-sidebar-btn"
                         data-reveal-id="{% url 'popup_ajax' 'link-add' %}?issue_id={{ issue_filter.id }}&person_id={{ person_filter.id }}&context_id={{ context_filter.id }}&context={{ context_filter.name }}">
-                        Submit link <i class="icon-circle-arrow-right icon-white"></i>
+                        Submit link <i class="glyphicon-circle-arrow-right icon-white"></i>
                     </button>
                 {% endif %}
                 
                 {% if sort_options %}
-                    <div class="filter-section shadow">
+                    <div class="filter-section shadow form-group">
                         <label for="id_sort">Sort by</label>
-                        <select id="id_sort" name="sort">
+                        <select id="id_sort" name="sort" class="form-control">
                             {% for sortv,sortk in sort_options %}
                                 <option
                                     {% if sort == sortv %}selected="selected"{% endif %}
@@ -318,7 +321,7 @@
                 {#{% if noun == 'person' %}#}
                 {% if form %}
                     {% for field in form %}
-                        <div class="filter-section shadow">
+                        <div class="filter-section shadow form-group">
                             {{ field.label_tag }}
                             {{ field }}
                         </div>

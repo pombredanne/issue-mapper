@@ -7,6 +7,7 @@
             <meta charset="utf-8">
             <title>{% block title %}{% if full_title %}{{ full_title }}{% endif %}{% endblock %}</title>
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            {#<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />#}
             <link rel="shortcut icon" href="{% static 'issue_mapper/img/favicon.ico' %}">
             {% for rss_title, rss_url in rss_urls %}
                 <link
@@ -24,7 +25,6 @@
                 <div class="tool-bar">
                     <div class="content-left">
                         <span class="name">
-                            {#<span class="header-icon"><i class="icon-certificate"></i></span>#}
                             &nbsp;
                             <a href="/"><span class="header-title">{{ settings.IM_TITLE_SAFE|safe }}</span></a>
                         </span>
@@ -37,10 +37,10 @@
                         {% else %}
                             <a href="{% url 'profile' request.user.username %}">{{ request.user }}</a>{#({{ request.user.person.total_karma }})#}&nbsp;{%comment%}|&nbsp;<a
                                 href="{{ request.user.person.pending_action_url }}"
-                                class="icon-exclamation-sign pending-action-notification {% if request.user.person.has_pending_action %}pending-action-notification-active{% endif %}"
+                                class="glyphicon-exclamation-sign pending-action-notification {% if request.user.person.has_pending_action %}pending-action-notification-active{% endif %}"
                                 title="{{ request.user.person.pending_action_name }}"></a>&nbsp;|&nbsp;<a
                                 href="{% url 'profile' request.user.username %}?type=reply"
-                                class="icon-envelope {% if request.user.person.unread_reply_count %}unread-icon{% endif %}"
+                                class="glyphicon-envelope {% if request.user.person.unread_reply_count %}unread-icon{% endif %}"
                                 title="You have {{ request.user.person.unread_reply_count }} unread messages."></a>&nbsp;{%endcomment%}|&nbsp;<a
                                 href="{% url 'django.contrib.auth.views.logout' %}?next={{ request.path }}">logout</a>
                         {% endif %}
@@ -49,7 +49,7 @@
                 </div>
             </div>
             <!-- Begin page content -->
-            <div class="container row-fluid">
+            <div class="container">
                 <div class="notifications">
                     {% block cms-anonymous-notifications %}
                         {% if not request.user.is_authenticated %}

@@ -5,7 +5,7 @@
     <div class="content">
         <fieldset>
             <legend>{% trans "Privileges" %}</legend>
-            <div><a href="{% url 'profile' person.user.username %}"><i class="icon-chevron-left"></i>&nbsp;Back to Profile</a></div>
+            <div><a href="{% url 'profile' person.user.username %}"><i class="glyphicon-chevron-left"></i>&nbsp;Back to Profile</a></div>
             <br/>
             <table>
             <thead>
@@ -19,9 +19,9 @@
                     <td class="enabled">
                         &nbsp;{{ priv_threshold }}&nbsp;
                         {% if priv_enabled %}
-                            <i class="icon-ok" title="you have this privilege"></i>
+                            <i class="glyphicon-ok" title="you have this privilege"></i>
                         {% else %}
-                            <i class="icon-remove"></i>
+                            <i class="glyphicon-remove"></i>
                         {% endif %}
                     </td>
                 </tr>

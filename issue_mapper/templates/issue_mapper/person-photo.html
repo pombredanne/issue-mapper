@@ -3,13 +3,13 @@
 	    <img
 	        src="{{ person.photo_thumbnail.url }}"
 	        style="max-width:{{ max_width }}px;max-height:{{ max_height }}px;"
-	        class="shadow"
+	        class="shadow img-responsive"
 	        alt="{{ person.display_name }}"
 	        title="{{ person.display_name }}"
 	    />
 	{% else %}
 	    <i
-	        class="icon-user missing-photo"
+	        class="glyphicon-user missing-photo"
 	        alt="No photo available."
 	        title="No photo available."
 	        style="max-width:{{ max_width }}px;max-height:{{ max_height }}px;"></i>

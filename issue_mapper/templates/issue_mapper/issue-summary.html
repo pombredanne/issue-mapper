@@ -8,9 +8,9 @@
 <form method="POST" action="">
     <div id="issue-container" class="well shadow">
         {% if form.person.real %}
-            <div class="span1">{% person_photo form.person %}</div>
+            <div class="col-md-1">{% person_photo form.person %}</div>
         {% endif %}
-        <div class="{% if form.person.real %}span10{% else %}span12{% endif %} issue-question">
+        <div class="{% if form.person.real %}col-md-10{% else %}col-md-12{% endif %} issue-question">
             <p>{% adminlink form.issue "issue" %}{{ form.friendly_text }}{% endadminlink %}</p>
         </div>
         <div class="clearboth"></div>
@@ -91,7 +91,7 @@
                 {% endif %}
                 {% if request.user.is_authenticated and priviledges.can.flag_issue %}
                     | <i
-                        class="icon-flag {% if form.issue.flagged %}flagged{% endif %}"
+                        class="glyphicon-flag {% if form.issue.flagged %}flagged{% endif %}"
                         {% if form.issue.flagged %}
                             alt="You flagged this issue for moderation or removal."
                             title="You flagged this issue for moderation or removal."

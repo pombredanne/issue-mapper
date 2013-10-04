@@ -7,7 +7,7 @@
         <span class="timestamp">added by {{ link.creator }} on {{ link.created }}</span>
         {% if request.user.is_authenticated and priviledges.can.flag_link %}
 	        <i
-	            class="icon-flag {% if link.flagged %}flagged{% endif %}"
+	            class="glyphicon-flag {% if link.flagged %}flagged{% endif %}"
 	            {% if link.flagged %}
 	                alt="You flagged this link for moderation or removal."
                     title="You flagged this link for moderation or removal."

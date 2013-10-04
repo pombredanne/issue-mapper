@@ -73,9 +73,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1b1b1b', end
 /* Not required for template or sticky footer method. */
 
 .container{
-    width: 98%;
-    /*max-width: 680px;*/
-    margin-top:10px;
+    border:0px solid red;
+    max-width:100%;
+    margin-top:15px;
+    padding-right:0px;
 }
 #footer .container{
     margin-top:0px;
@@ -300,9 +301,12 @@ button[value=save]{
     /*border-bottom:1px dashed #ddd;*/
     padding-top:10px;
     padding-bottom:10px;
+    padding-left:0;
+    padding-right:0;
+    margin-left:0;
+    margin-right:0;
 }
-.issue-container .span1a{
-    width:25px;
+.issue-container .col-md-1a{
     color:#999;
     font-size:12pt;
     text-align:center;
@@ -311,21 +315,22 @@ button[value=save]{
 .issue-container .span10{
     margin-left:30px;
 }
-.issue-list{
-    
+.search-list{
+    padding:0;
+    margin:0;
 }
-.issue-list h3{
+.search-list h3{
     color:#bbb;
     text-transform:uppercase;
     font-size:14px;
     margin-top:0px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     /*text-decoration:underline;*/
 }
-.issue-list h3 button{
+.search-list h3 button{
     text-transform:none;
 }
-.issue-list h3 .muted{
+.search-list h3 .muted{
     font-size:10px;
     font-weight:normal;
 }
@@ -364,10 +369,14 @@ button[value=save]{
     margin-top:0;
 }
 #keyword-search-box{
+    width:30%;
+    display:inline-block;
+/*
     font-size: 14px;
-    height: 16px;
+    height: 20px;
     margin-left: 10px;
     margin-top: 10px;
+    border: 1px solid lightgray;*/
 }
 .container .content{
     font-size:16px;
@@ -785,8 +794,8 @@ h3 .pagination{
     /*text-decoration:none;*/
 }
 .search-list-left{
-    float:left;
-    width:75%;
+    padding-left:0;
+    padding-right:15px;
 }
 .search-list-left .new-issue{
     border: 1px dashed #ccc;
@@ -794,13 +803,9 @@ h3 .pagination{
 .search-list-left-full-width{
     width:100%;
 }
-.search-list-person .search-list-left{
-    width:80%;
-}
 .search-list-right{
-    float:left;
-    width:18%;
-    margin-left:20px;
+    padding-left:0px;
+    padding-right:15px;
 }
 .search-list-right .filter-section{
     background-color:rgba(255,255,255,0.5);
@@ -812,7 +817,9 @@ h3 .pagination{
     margin-bottom:10px;
     padding-top:10px;
     padding-left:10px;
-    width: 230px;
+    padding-bottom:10px;
+    padding-right:10px;
+    width: 100%;
     
 }
 .search-list-right .filter-section select{
@@ -1177,10 +1184,7 @@ tr.privilege td.enabled .icon-remove{
 .notifications .notification a{
     vertical-align:bottom;
 }
-/*.row-fluid [class*="span"]{*/
-.row-fluid > .issue-list{
-    margin-left:0px;
-}
+
 select[multiple=multiple]{
     height:300px;
 }
@@ -1402,8 +1406,11 @@ select[multiple=multiple]{
     font-size:18px;
 }
 .search-list-right label{
-    color:#777;
+    color:#bbb;
     text-shadow: 1px 1px 0px #fff;
+    font-weight:normal;
+    text-transform:uppercase;
+    font-size:13px;
 }
 #update-search-results,
 a.full-width-sidebar-btn{
@@ -1471,4 +1478,11 @@ a:hover .context-filter{
     font-weight:bold;
     font-size:14px;
     text-decoration: underline; 
+}
+.col-md-voter{
+    text-align:center;
+    color:#999;
+}
+.muted{
+    color:#999;
 }

@@ -1,5 +1,5 @@
 {% load issue_mapper urls markup %}
-{% if full %}<div class="issue-container"><div class="span10">{% endif %}
+{% if full %}<div class="issue-container"><div class="col-md-10">{% endif %}
 <div class="comment" comment_id="{{ item.id }}">
     {% if item.deleted %}
         <span class="comment-commenter muted">[deleted]</span>

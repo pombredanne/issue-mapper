@@ -1,7 +1,6 @@
 {% load issue_mapper urls %}
 {% if full %}<div class="issue-container well shadow">{% endif %}
-{#<div class="span1a">{% inline_voter item %}</div>#}
-<div class="span10">
+<div class="col-md-10">
     {% if item.object.url.og_image_thumbnail %}<div class="link-thumbnail" style="float:left;"><img
             src="{{ item.object.url.og_image_thumbnail.url }}"
             {#style="max-width:50px;max-height:50px;"#}

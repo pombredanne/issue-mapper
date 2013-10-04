@@ -130,6 +130,11 @@ class SubmitLinkForm(forms.Form):
 
 class SearchListForm(forms.Form):
     
+    def __init__(self, *args, **kwargs):
+        super(SearchListForm, self).__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
+    
     def no_query_found(self):
         q = self.searchqueryset.all()
         return q
@@ -265,6 +270,9 @@ class LinkListForm(SearchListForm):
         
 #        self.fields['state'].widget.attrs['no-auto-update'] = 1
 #        self.fields['state'].clean = self.clean_state #TODO:why doesn't Django's default MultipleChoiceField cleaner work?!
+        
+#        for field in self.fields:
+#            self.fields[field].widget.attrs['class'] = 'form-control'
         
         #print "self.fields['state']:",self.fields['state'].value
         self.full_clean()

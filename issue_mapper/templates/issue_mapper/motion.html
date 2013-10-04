@@ -2,9 +2,9 @@
 {% load issue_mapper i18n %}
 {% block title %}Motion{% endblock %}
 {% block body %}
-    <div class="span3">
+    <div class="col-md-3">
 	    <div class="view-all-motions">
-	        <a href="{% url 'motion_list' %}"><i class="icon-chevron-left"></i> View all motions</a>
+	        <a href="{% url 'motion_list' %}"><i class="glyphicon-chevron-left"></i> View all motions</a>
 	        <br/>
 	        <br/>
 	    </div>
@@ -34,7 +34,7 @@
 	    {#<p>Goal: {{ motion.passage_criteria_friendly_text }}</p>#}
 	    {#<p>Eligibility: {{ motion.eligibility }}</p>#}
     </div>
-    <div class="span8 motion-comments">
+    <div class="col-md-8 motion-comments">
 	    <fieldset>
 		    <legend>Motion {{ motion.id }}: {{ motion.description_short }}</legend>
 		    <div class="sub-header muted">created by <a href="{% url 'profile' motion.creator.user.username %}">{{ motion.creator }}</a> on {{ motion.created }}</div>
