@@ -321,7 +321,7 @@ button[value=save]{
     margin-left:30px;
 }
 .issue-container .col-md-voter i.vote-link{
-    /*display:block;*/
+    display:block;
 }
 .search-list{
     padding:0;
@@ -1435,7 +1435,7 @@ button.full-width-sidebar-btn{
     color:white;
 }
 button.full-width-sidebar-btn:hover{
-    color:black;
+    /*color:black;*/
 }
 /* Force footer to bottom of page if not enough content. */
 body.footer-fixed{
