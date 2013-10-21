@@ -46,10 +46,13 @@ class UserContextMiddleware(object):
                 expires=timezone.now()+timedelta(days=c.MAX_COOKIE_DAYS),
                 domain=settings.SESSION_COOKIE_DOMAIN,
             )
+        else:
+            response.delete_cookie(c.COOKIE_NAME)
         
         leave_user_context()
         return response
 
+#TODO:deprecated? no longer necessary if pure-anonymous users aren't used?
 def get_person(request, raise_404=False, only_active=False):
     """
     Gets or optionally creates the person record associated with the
@@ -108,6 +111,17 @@ def get_current_user():
     thread_ident = thread.get_ident()
     if thread_ident in state:
         return state[thread_ident]
+        
+def reset_current_person(request):
+    """
+    Re-assigns the current request to a new anonymous person.
+    """
+    from models import Person
+    thread_ident = thread.get_ident()
+    if thread_ident in state_person:
+        del state_person[thread_ident]
+    person = Person.objects.create()
+    state_person[thread_ident] = person
 
 def get_current_person(raise_404=False, only_active=False):
     from django.http import Http404

@@ -978,6 +978,7 @@ class FeedAccountAdmin(
     list_display = (
         'id',
         'type',
+        'url',
         'username',
         'active',
     )
@@ -1092,6 +1093,9 @@ class FeedAdmin(
     )
     search_fields = (
         'query',
+    )
+    readonly_fields = (
+        'link_count',
     )
     
 site.register(models.Feed, FeedAdmin)

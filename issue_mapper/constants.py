@@ -217,11 +217,13 @@ SENATOR_CLASS_CHOICES = (
 
 FEED_GALERTS = 'galerts'
 FEED_GOOGLE_NEWS = 'google-news'
+FEED_GENERIC_RSS = 'generic-rss'
 FEED_SOCIALMENTION = 'socialmention'
 FEED_FAROO = 'faroo'
 FEED_TYPES = (
     (FEED_GALERTS, 'Google Alerts'),
     (FEED_GOOGLE_NEWS, 'Google News'),
+    (FEED_GENERIC_RSS, 'Generic RSS'),
     #(FEED_SOCIALMENTION, 'Social Mention'),
 )
 

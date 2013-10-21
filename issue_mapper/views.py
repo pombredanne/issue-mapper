@@ -40,6 +40,22 @@ def add_vars(request):
         current_person=current_person,
     )
 
+from registration.backends.simple.views import RegistrationView as BaseRegistrationView
+
+class RegistrationView(BaseRegistrationView):
+    
+    def get_success_url(self, request, user):
+        #return (user.get_absolute_url(), (), {})
+        #TODO:redirect to welcome/tutorial page?
+        return '/'
+
+def logout(request, next_page='/'):
+    from django.contrib.auth.views import logout as _logout
+    response = _logout(request, next_page=next_page)
+    middleware.reset_current_person(request)
+    #response.delete_cookie(c.COOKIE_NAME)
+    return response
+
 class BaseTemplateView(TemplateView):
     
     title = None
@@ -526,10 +542,6 @@ class _IssueView(BaseIssueView, FormView):
             i += 1
         
         if self.issue.active and choice_id not in (c.NEXT, c.SKIP):
-            print '!'*80
-            print 'choice_id:',choice_id
-            print 'person:',person
-            print 'creator:',creator
             assert choice_id in dict(c.POSITION_CHOICES)
             position, new_position = models.Position.create(
                 issue=self.issue,
@@ -651,10 +663,6 @@ def process_vote(request, object_id, object_type, vote_type):
     """
     Records a user's up or down vote on a record.
     """
-#    print '!'*80
-#    print 'object_id:',object_id
-#    print 'object_type:',object_type
-#    print 'vote_type:',vote_type
     response_type = request.GET.get('rt', c.HTML)
     object_cls = {
         c.LINK:models.Link,
@@ -1285,15 +1293,16 @@ class BaseListViewSimple(ListView):
         if hasattr(request, 'context'):
             return request.context
         
+        #NOTE: Do not do this. Show everything in all contexts, and let the user chose.
         # Otherwise, if a person is specified, use the most general context based
         # on their last term. e.g. if they're a federal senator in the U.S., then
         # lookup the context for "US".
-        person_filter = self.person_filter
-        if person_filter and person_filter.terms.all().count():
-            term = person_filter.most_recent_term
-            term_contexts = term.contexts
-            if term_contexts:
-                return term_contexts[0]
+#        person_filter = self.person_filter
+#        if person_filter and person_filter.terms.all().count():
+#            term = person_filter.most_recent_term
+#            term_contexts = term.contexts
+#            if term_contexts:
+#                return term_contexts[0]
             
 #            # Otherwise assume we're in the US default context.
 #            return models.Context.objects.get(
@@ -1590,8 +1599,6 @@ class BaseListViewSimple(ListView):
             q = models.URL.objects.all()
             
         filter_links_by = flb or self.filter_links_by
-#        print '!'*80
-#        print 'filter_links_by:',filter_links_by
         person_filter = self.person_filter
         issue_filter = self.issue_filter
         context_filter = self.context_filter
@@ -1962,8 +1969,6 @@ class BaseListViewSimple(ListView):
                         matched_with__matcher__user=self.request.user,
                     )
         else:
-            print '!'*80
-            print 'form not valid'
             print form.errors
                 
         return q.distinct()

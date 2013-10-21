@@ -6,11 +6,11 @@ from optparse import make_option
 from issue_mapper import models
 
 class Command(BaseCommand):
-    args = ''
+    args = '<ids>'
     help = 'Updates feeds.'
     option_list = BaseCommand.option_list + (
         make_option('--force', default=False, action='store_true'),
     )
 
-    def handle(self, **options):
-        models.Feed.update_all(**options)
+    def handle(self, *ids, **options):
+        models.Feed.update_all(*ids, **options)

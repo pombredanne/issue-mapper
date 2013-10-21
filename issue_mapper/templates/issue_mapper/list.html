@@ -280,17 +280,34 @@
                     </div>
                 {% endif %}
                 
-                {% if priviledges.can.answer_issue_for_themself and current_person.has_unpositioned_issues %}
-                    <a href="{% url 'issue_list' %}?positioned=false"
+                {% if request.user.is_authenticated %}
+                    {% if priviledges.can.answer_issue_for_themself and current_person.has_unpositioned_issues %}
+                        <a href="{% url 'issue_list' %}?positioned=false"
+                            class="btn btn-primary full-width-sidebar-btn">
+                            State Your Position <i class="icon-circle-arrow-right icon-white"></i>
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a data-reveal-id="{% url 'login_register' %}"
                         class="btn btn-primary full-width-sidebar-btn">
                         State Your Position <i class="icon-circle-arrow-right icon-white"></i>
                     </a>
                 {% endif %}
-                {% if selected_issue_type == 'link' and priviledges.can.submit_link %}
+                
+                {% if request.user.is_authenticated %}
+                    {% if selected_issue_type == 'link' and priviledges.can.submit_link %}
+                        <button
+                            type="button"
+                            class="btn btn-warning full-width-sidebar-btn"
+                            data-reveal-id="{% url 'popup_ajax' 'link-add' %}?issue_id={{ issue_filter.id }}&person_id={{ person_filter.id }}&context_id={{ context_filter.id }}&context={{ context_filter.name }}">
+                            Submit link <i class="icon-circle-arrow-right"></i>
+                        </button>
+                    {% endif %}
+                {% else %}
                     <button
                         type="button"
                         class="btn btn-warning full-width-sidebar-btn"
-                        data-reveal-id="{% url 'popup_ajax' 'link-add' %}?issue_id={{ issue_filter.id }}&person_id={{ person_filter.id }}&context_id={{ context_filter.id }}&context={{ context_filter.name }}">
+                        data-reveal-id="{% url 'login_register' %}">
                         Submit link <i class="icon-circle-arrow-right"></i>
                     </button>
                 {% endif %}

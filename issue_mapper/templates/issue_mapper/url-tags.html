@@ -3,25 +3,36 @@
         <li class="real-tag real-person-tag{% if link.has_negative_weight %} real-tag-negative{% endif %}">
             <a
                 data-url="{% url 'popup_ajax' 'tag-actions' 'link' link.id %}"
+                target="_blank"
                 href="{{ link.person.get_absolute_url }}"><i class="icon-user"></i>&nbsp;{{ link.person.display_name }}{% if link.weight_non_zero %} {{ link.weight_non_zero }}{% endif %}</a></li>
     {% endfor %}
     {% for link in item.taggable_object.issue_links %}
         <li class="real-tag real-issue-tag{% if link.has_negative_weight %} real-tag-negative{% endif %}">
             <a
                 data-url="{% url 'popup_ajax' 'tag-actions' 'link' link.id %}"
+                target="_blank"
                 href="{{ link.issue.get_absolute_url }}"><i class="icon-info-sign"></i>&nbsp;{{ link.issue.friendly_text_no_punct }}{% if link.weight_non_zero %} {{ link.weight_non_zero }}{% endif %}</a></li>
     {% endfor %}
     {% if item.taggable_object.quotes.all.count %}
-        <li class="quotes real-quotes-tag"><a href="#" data-url="{% url 'quote_get_ajax' item.taggable_object.id %}"><i class="icon-comment"></i> show {{ item.taggable_object.quotes.all.count }} quotes</a></li>
+        <li class="quotes real-quotes-tag">
+            <a href="#" data-url="{% url 'quote_get_ajax' item.taggable_object.id %}"><i class="icon-comment"></i> show {{ item.taggable_object.quotes.all.count }} quotes</a></li>
     {% endif %}
     <li class="add-tag">
         <a
             href="#"
-            data-reveal-id="{% url 'popup_ajax' 'url-add-person' %}?url_id={{ item.taggable_object.id }}{#&url_context_id={{ item.id }}#}"
+            {% if request.user.is_authenticated %}
+                data-reveal-id="{% url 'popup_ajax' 'url-add-person' %}?url_id={{ item.taggable_object.id }}{#&url_context_id={{ item.id }}#}"
+            {% else %}
+                data-reveal-id="{% url 'login_register' %}"
+            {% endif %}
             title="Tag this URL with a person."><i class="icon-user"></i>&nbsp;Add Person</a></li>
     <li class="add-tag">
         <a
             href="#"
-            data-reveal-id="{% url 'popup_ajax' 'url-add-issue' %}?url_id={{ item.taggable_object.id }}{#&url_context_id={{ item.id }}#}"
+            {% if request.user.is_authenticated %}
+                data-reveal-id="{% url 'popup_ajax' 'url-add-issue' %}?url_id={{ item.taggable_object.id }}{#&url_context_id={{ item.id }}#}"
+            {% else %}
+                data-reveal-id="{% url 'login_register' %}"
+            {% endif %}
             title="Tag this URL with an issue."><i class="icon-info-sign"></i>&nbsp;Add Issue</a></li>
 </ul>

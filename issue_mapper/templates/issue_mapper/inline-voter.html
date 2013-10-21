@@ -3,11 +3,19 @@
         <i
             class="icon-chevron-up vote-link upvote-link {% if object.upvoted %}upvote-link-selected{% endif %} {%if not settings.IM_ALLOW_SELF_VOTE and object.by_current_user %}vote-link-disabled{% endif %}"
             vote-url="{% url 'process_vote' object.vote_type object.id 'up' %}"></i>
+    {% else %}
+        <i
+            class="icon-chevron-up vote-link upvote-link"
+            data-reveal-id="{% url 'login_register' %}"></i>
     {% endif %}
     &nbsp;<b {% if request.user.is_staff %}title="top={{ object.top_weight }}, top_urlcontext_weight={{ obj.top_urlcontext_weight }}"{% endif %}>{{ object.weight }}</b>&nbsp;
     {% if object.votable and priviledges.can.vote_link %}
         <i
             class="icon-chevron-down vote-link downvote-link {% if object.downvoted %}downvote-link-selected{% endif %} {%if not settings.IM_ALLOW_SELF_VOTE and object.by_current_user %}vote-link-disabled{% endif %}"
             vote-url="{% url 'process_vote' object.vote_type object.id 'down' %}"></i>
+    {% else %}
+        <i
+            class="icon-chevron-down vote-link downvote-link"
+            data-reveal-id="{% url 'login_register' %}"></i>
     {% endif %}
 </span>

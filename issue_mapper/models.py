@@ -227,9 +227,6 @@ class BaseVote(BaseModel):
         
         # Update cached link vote totals.
         object_creator = self.vote_object.creator #or get_default_creator()
-#        print '!'*80
-#        print 'object_creator:',object_creator
-#        print 'old_vote:',old_vote
         if old_vote:
             #print 'self.vote_object:',type(self.vote_object),self.vote_object
             if old_vote.vote != self.vote:
@@ -1288,10 +1285,6 @@ class Person(BaseModel):
             self.last_name or '',
             self.birthday or ''
         )
-    
-    @property
-    def has_unpositioned_issues(self):
-        return self.unpositioned_issues.count() > 0
     
     @property
     def has_unpositioned_issues(self):
@@ -5295,6 +5288,8 @@ class FeedAccount(BaseModel):
     
     url = models.URLField(
         max_length=100,
+        help_text='''If a generic RSS type, this is the template URL to use,
+            replacing {q} with the appropriate query text.''',
         blank=True,
         null=True)
     
@@ -5440,7 +5435,9 @@ class Feed(BaseModel):
         return self.last_checked < cutoff
     
     def clean(self, *args, **kwargs):
+    
         result = super(Feed, self).clean(*args, **kwargs)
+        
         if not self.id and self.account.total_feeds >= self.account.max_feeds:
             raise ValidationError, \
                 'Unable to create new feed. Account has reached the maximum '\
@@ -5471,20 +5468,29 @@ class Feed(BaseModel):
                 output='rss',
             )
             self.url = 'http://news.google.com/news?' + urllib.urlencode(params)
+        elif self.account.type == c.FEED_GENERIC_RSS:
+            if self.account.url:
+                self.url = self.account.url.format(q=urllib.urlencode(dict(q=self.query))[2:])
         
         return result
     
     @classmethod
-    def update_all(cls, **kwargs):
-        q = cls.objects.get_pending()
+    def update_all(cls, *ids, **kwargs):
+        ids = map(int, ids)
+        if ids:
+            q = cls.objects.all().filter(id__in=ids)
+        else:
+            q = cls.objects.get_pending()
+        q = q.order_by('?')
         total = q.count()
+        print 'Total:',total
         i = 0
         for feed in q:
             i += 1
             print '%i of %i' % (i, total)
             JobModel.update_progress(total_parts=total, total_parts_complete=i)
-            feed.update()
-            #time.sleep(random.randint(1, 3))
+            feed.update(force=bool(ids))
+            time.sleep(random.randint(1, 3))
     
     def _lookup_galerts_manager(self):
         return galerts.GAlertsManager(
@@ -5507,15 +5513,12 @@ class Feed(BaseModel):
             return
         elif self.account.type == c.FEED_GALERTS:
             pass
-#            gam = self._lookup_galerts_manager()
-#            alert = self._lookup_galerts_object()
-#            if alert:
-#                gam.delete(alert)
-#                self.url = None
         elif self.account.type == c.FEED_GOOGLE_NEWS:
             pass
+        elif self.account.type == c.FEED_GENERIC_RSS:
+            pass
         else:
-            raise NotImplemented
+            raise NotImplementedError
         if save:
             self.save()
         
@@ -5524,18 +5527,12 @@ class Feed(BaseModel):
             return
         elif self.account.type == c.FEED_GALERTS:
             pass
-#            gam = self._lookup_galerts_manager()
-#            gam.create(
-#                query=self.query,
-#                type=galerts.TYPE_EVERYTHING,
-#                feed=True)
-#            alert = self._lookup_galerts_object()
-#            if alert:
-#                self.url = alert.feedurl
         elif self.account.type == c.FEED_GOOGLE_NEWS:
             pass
+        elif self.account.type == c.FEED_GENERIC_RSS:
+            pass
         else:
-            raise NotImplemented
+            raise NotImplementedError
         if save:
             self.save()
     
@@ -5543,38 +5540,47 @@ class Feed(BaseModel):
         self.unregister(save=False)
         super(Feed, self).delete(*args, **kwargs)
     
-    def update(self):
+    def update(self, force=False):
         
         user = User.objects.get(username=settings.IM_DEFAULT_USERNAME)
         creator, _ = Person.objects.get_or_create(user=user)
         
-        if self.account.type in (c.FEED_GALERTS, c.FEED_GOOGLE_NEWS):
+        if self.account.type in (c.FEED_GALERTS, c.FEED_GOOGLE_NEWS, c.FEED_GENERIC_RSS):
+            print 'Processing RSSS feed:',self.url
             self.register()
             # Query feed.
             if self.url:
                 d = feedparser.parse(self.url)
                 i = 0
+                print 'Entries:',len(d.entries)
                 for entry in d.entries:
                     if 'google' in entry.title.lower():
+                        print 'Skipping Google news entry.'
                         continue
                     i += 1
                     title = re.sub('<[^>]+>', '', entry.title).strip()
                     if '...' in title:
                         title = None
-                    url = urlparse.urlparse(entry.link)
-                    qs = urlparse.parse_qs(url.query)
-                    #print 'qs:',qs
-                    if not qs:
-                        print '!'*80
-                        print 'Skipping invalid url: %s' % (url,)
-                        print '!'*80
-                        continue
-                    if 'q' in qs:
-                        url = qs['q'][0].strip()
-                    elif 'url' in qs:
-                        url = qs['url'][0]
+                        
+                    if self.account.type == c.FEED_GOOGLE_NEWS:
+                        url = urlparse.urlparse(entry.link)
+                        qs = urlparse.parse_qs(url.query)
+                        #print 'url:',entry.link
+                        #print 'qs:',qs
+                        if not qs:
+                            print '!'*80
+                            print 'Skipping invalid url: %s' % (url,)
+                            print '!'*80
+                            continue
+                        if 'q' in qs:
+                            url = qs['q'][0].strip()
+                        elif 'url' in qs:
+                            url = qs['url'][0]
+                        else:
+                            raise Exception, 'No URL found in feed item: %s' % (str(qs),)
                     else:
-                        raise Exception, 'No URL found in feed item: %s' % (str(qs),)
+                        url = entry.link
+                        
                     print i, title, url
                     if 'https' in url.lower():
                         continue
@@ -5599,6 +5605,11 @@ class Feed(BaseModel):
                             creator=creator,
                             feed=self
                         ))
+#                    link.feed = self
+#                    link.save()
+#                    print 'issue:',self.issue
+#                    print 'person:',self.person
+#                    print 'link:', link
                     
                     # Add URL to appropriate contexts.
                     contexts = []
@@ -5616,18 +5627,25 @@ class Feed(BaseModel):
                             contexts.append(Context.objects.get(country=terms[0].country, state=state, county=None))
                         
                         # Lookup state context.
-                        terms = self.person.terms.filter(role__level=c.ROLE_LEVEL_STATE)
+                        terms = self.person.terms.filter(role__level__in=[c.ROLE_LEVEL_CITY, c.ROLE_LEVEL_COUNTY, c.ROLE_LEVEL_STATE])
                         if terms.count():
                             state = State.objects.get(state=terms[0].state)
                             contexts.append(Context.objects.get(country=terms[0].country, state=state, county=None))
                             
                         #TODO:Lookup county context?
                         
-                    for context in contexts:
-                        URLContext.objects.get_or_create(
-                            context=context,
-                            url=url,
-                            defaults=dict(creator=creator))
+                        #TODO:Lookup city context?
+                    
+                    print 'contexts:',contexts
+                    if contexts:
+                        for context in contexts:
+                            URLContext.objects.get_or_create(
+                                context=context,
+                                url=url,
+                                defaults=dict(creator=creator))
+                    else:
+                        print '!'*80
+                        print 'No contexts for creating links!'
                     
                     if _:
                         print '\tNEW'
@@ -5635,7 +5653,7 @@ class Feed(BaseModel):
                         print '\tOLD'
             #TODO:self.last_checked = timezone.now(); self.save()
         else:
-            raise NotImplemented
+            raise NotImplementedError
         self.last_checked = timezone.now()
         self.next_check = timezone.now() + timedelta(days=self.account.min_check_hours/24.)
         self.save()

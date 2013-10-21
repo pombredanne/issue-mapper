@@ -78,6 +78,16 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1b1b1b', end
     margin-top:15px;
     padding-right:0px;
 }
+.container-full{
+    padding-right:15px;
+}
+.container-full .form-control{
+    width:300px;
+}
+.container input[type=checkbox].form-control,
+.popup-body input[type=checkbox].form-control{
+    display:inline;
+}
 #footer .container{
     margin-top:0px;
 }
@@ -642,13 +652,22 @@ button[value=save]{
     margin:0;
 }
 
-/*.error,*/
 #new-link-section input.error,
 textarea.error{
     border:1px solid red;
 }
 input[type=text].error{
     border:1px solid red;
+    /*color: rgb(185, 74, 72);*/
+}
+.error > input[type=text],
+.error > input[type=password],
+.error > input[type=checkbox],
+.error > textarea{
+    border: 1px solid rgb(185, 74, 72);
+}
+.controls .error{
+    color: rgb(185, 74, 72);
 }
 .pagination{
     text-align:center;
@@ -1229,7 +1248,9 @@ select[multiple=multiple]{
     font-size:11px;
     margin-bottom:3px;
 }
-
+.tags li.add-tag, .tags .add-tag a{
+    height:25px;
+}
 .tags a{
     margin-left:20px;
     padding:0 10px 0 12px;
@@ -1470,6 +1491,7 @@ Note, qtip uses z-index of 15000, so reveal needs to use something higher. */
 }
 .reveal-modal {
     z-index:16001;
+    margin-left:-260px;
 }
 
 .quotes-list{
@@ -1505,4 +1527,10 @@ a:hover .context-filter{
 }
 .issue-summary{
     margin-right:15px;
+}
+#login-form{
+    padding-bottom:15px;
+}
+.alert{
+    margin-top: 10px;
 }
