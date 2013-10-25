@@ -169,15 +169,19 @@ def inline_form_field(field):
     ), context_instance=RequestContext(request))
 
 @register.simple_tag
-def inline_voter(object):
+def inline_voter(object, up_title='', down_title=''):
     request = get_current_request()
     if isinstance(object, models.URL) and object.context:
         try:
-            object = models.URLContext.objects.get(url=object, context=object.context)
+            object = models.URLContext.objects.get(
+                url=object,
+                context=object.context)
         except models.URLContext.DoesNotExist:
             pass
     return loader.render_to_string('issue_mapper/inline-voter.html', dict(
         object=object,
+        up_title=up_title,
+        down_title=down_title,
     ), context_instance=RequestContext(request))
 
 @register.simple_tag

@@ -47,6 +47,8 @@ import feedparser
 
 from admin_steroids.utils import StringWithTitle, get_admin_change_url
 
+from sense.models import BaseTripleVote, Sense, Triple, Word
+
 JobModel = None
 try:
     from chroniker.models import Job as JobModel
@@ -2743,7 +2745,12 @@ class Issue(BaseModel):
         blank=False,
         null=False)
     
-    contexts = models.ManyToManyField('Context')
+    contexts = models.ManyToManyField('Context', verbose_name='search contexts')
+    
+    logic_context = models.ForeignKey(
+        'sense.Context',
+        blank=True,
+        null=True)
     
     search_index = VectorField()
 
@@ -2769,6 +2776,18 @@ class Issue(BaseModel):
         return (self.issue,)
     natural_key.dependencies = ['issue_mapper.person']
 
+    @property
+    def triple_uri(self):
+        return '/pf/issue/%s' % self.id
+
+    @property
+    def triple_affirmative_uri(self):
+        return '/pf/issue/%s/yes' % self.id
+    
+    @property
+    def triple_negative_uri(self):
+        return '/pf/issue/%s/no' % self.id
+    
     @property
     def undeleted_positions(self):
         return self.positions.filter(deleted__isnull=True)
@@ -3189,6 +3208,10 @@ class Issue(BaseModel):
         
         if not self.slug:
             self.slug = issue_to_slug(self.issue)
+        
+        if not self.logic_context:
+            from sense.models import Context
+            self.logic_context = Context.objects.get_or_create(parent=None, name=self.slug)[0]
         
         self.issue_tagless = self.tagless
         
@@ -3912,7 +3935,35 @@ class LinkManager(models.Manager):
         return self.active()\
             .filter(absolute_votes__lt=c.MIN_VOTE_NEW_THRESHOLD)\
             .filter(created__gte=timezone.now() - timedelta(days=c.MIN_VOTE_NEW_DAYS))
+
+def get_sense(o):
+    if isinstance(o, Sense):
+        return o
+    elif isinstance(o, Issue):
+        raise NotImplementedError
+    elif isinstance(o, Link):
+        try:
+            return SenseLink.objects.get(link=o).sense
+        except SenseLink.DoesNotExist:
+            word, _ = Word.objects.get_or_create(text='link %i' % o.id)
+            sense, _ = Sense.objects.get_or_create(word=word, defaults=dict(definition='link %i' % o.id))
+            SenseLink.objects.get_or_create(sense=sense, link=o)
+            return sense
+    elif isinstance(o, basestring):
+        text = o.strip().lower()
+        word, _ = Word.objects.get_or_create(text=text)
+        sense, _ = Sense.objects.get_or_create(word=word, defaults=dict(definition=text))
+        return sense
+    else:
+        raise NotImplementedError
     
+def get_triple(s, p, o):
+    _s = get_sense(s)
+    _p = get_sense(p)
+    _o = get_sense(o)
+    t, _ = Triple.objects.get_or_create(subject=_s, predicate=_p, object=_o)
+    return t
+
 class Link(BaseModel, BaseVoteTarget):
     
     objects = LinkManager()
@@ -3953,6 +4004,12 @@ class Link(BaseModel, BaseVoteTarget):
         default=0,
         db_index=True,
         help_text='Count of up votes minus count of down votes.')
+    
+    support_no_count = models.PositiveIntegerField(default=0, db_index=True,)
+    
+    support_yes_count = models.PositiveIntegerField(default=0, db_index=True,)
+    
+    support_total_count = models.PositiveIntegerField(default=0, db_index=True,)
     
     feed = models.ForeignKey(
         'Feed',
@@ -3996,6 +4053,10 @@ class Link(BaseModel, BaseVoteTarget):
         return unicode(self.url)
     
     @property
+    def triple_uri(self):
+        return '/pf/link/%s' % self.id
+    
+    @property
     def has_negative_weight(self):
         return self.weight < 0
     
@@ -4008,6 +4069,46 @@ class Link(BaseModel, BaseVoteTarget):
         if not self.weight:
             return ''
         return '%+i' % self.weight
+    
+    @property
+    def total_supports_no(self):
+        t = get_triple(self, c.SUPPORTS, c.NO)
+        return int(round(t.weight, 0))
+    
+    @property
+    def total_supports_yes(self):
+        t = get_triple(self, c.SUPPORTS, c.YES)
+        return int(round(t.weight, 0))
+        
+    @property
+    def user_supports_no(self):
+        """
+        Returns true if the user believes this link supports the NO position
+        on the issue. Returns false otherwise.
+        """
+        if not self.issue:
+            return
+        user = middleware.get_current_user()
+        if not user.is_authenticated():
+            return
+        t = get_triple(self, c.SUPPORTS, c.NO)
+        votes = t.votes.all().filter(person__user=user, weight__gte=0.5)
+        return votes.count() > 0
+    
+    @property
+    def user_supports_yes(self):
+        """
+        Returns true if the user believes this link supports the YES position
+        on the issue. Returns false otherwise.
+        """
+        if not self.issue:
+            return
+        user = middleware.get_current_user()
+        if not user.is_authenticated():
+            return
+        t = get_triple(self, c.SUPPORTS, c.YES)
+        votes = t.votes.all().filter(person__user=user, weight__gte=0.5)
+        return votes.count() > 0
     
     @property
     def domain(self):
@@ -4178,7 +4279,7 @@ class Link(BaseModel, BaseVoteTarget):
         if not self.issue and not self.person:
             raise ValidationError, 'Either an issue or person must be set.'
     
-    def save(self, *args, **kwargs):
+    def save(self, vote=None, *args, **kwargs):
         
         if self.url.title and not self.title:
             self.title = self.url.title
@@ -4192,6 +4293,29 @@ class Link(BaseModel, BaseVoteTarget):
         self.top_weight = p / (t + 2)**1.5
         
         if self.issue:
+            
+            no_offset = 0
+            yes_offset = 0
+            if vote:
+                if vote.triple.predicate.word.text == c.SUPPORTS:
+                    if vote.triple.object.word.text == c.YES:
+                        yes_offset = 1 if vote.weight > 0.5 else -1
+                    elif vote.triple.object.word.text == c.NO:
+                        no_offset = 1 if vote.weight > 0.5 else -1
+            
+            # Update issue support counts.
+            self.support_no_count = Triple.objects.filter(
+                subject__senselink__link=self,
+                predicate__word__text=c.SUPPORTS,
+                object__word__text=c.NO).aggregate(Sum('weight'))['weight__sum'] or 0
+            self.support_no_count += no_offset
+            self.support_yes_count = Triple.objects.filter(
+                subject__senselink__link=self,
+                predicate__word__text=c.SUPPORTS,
+                object__word__text=c.YES).aggregate(Sum('weight'))['weight__sum'] or 0
+            self.support_yes_count += yes_offset
+            self.support_total_count = self.support_no_count + self.support_yes_count
+            
             if self.issue.last_link_datetime:
                 self.issue.last_link_datetime = max(
                     self.issue.last_link_datetime or timezone.now(),
@@ -6168,4 +6292,51 @@ class Candidate(BaseModel):
     def __unicode__(self):
         return '%s running for %s in %s' \
             % (self.person, self.role, self.election)
-            
+
+class TripleVote(BaseTripleVote):
+    
+    person = models.ForeignKey(Person, related_name='votes')
+    
+    class Meta:
+        unique_together = (
+            ('triple', 'person'),
+        )
+
+def triplevote_post_create(sender, instance, **kwargs):
+    """
+    Calls Link.save() every time a triple vote is updated that references
+    a triple referencing a link.
+    """
+    # TODO:Fix? Link.save() doesn't see changes from TripleVote.save()?!
+    #django.db.transaction.commit() # this has no effect
+    
+    # Lookup all links from related senses and save the link.
+    vote = instance
+    q = SenseLink.objects.filter(sense=vote.triple.subject, link__isnull=False)
+    print 'Total:',q.count()
+    for sl in q:
+        print 'sl:',sl
+        sl.link.save(vote=vote)
+signals.post_save.connect(triplevote_post_create, sender=TripleVote)
+
+from sense import settings as _settings
+_settings.TripleVoteModel = TripleVote
+_settings.get_default_person = lambda: Person.objects.get_or_create(bot=True, nickname='VoteBot9000')[0]
+
+class SenseLink(BaseModel):
+    """
+    Associates an issue or link with a sense in the triple store.
+    """
+    
+    sense = models.OneToOneField('sense.Sense')
+    
+    issue = models.OneToOneField(Issue, blank=True, null=True, related_name='sense')
+    
+    link = models.OneToOneField(Link, blank=True, null=True, related_name='sense')
+    
+    class Meta:
+        unique_together = (
+            ('sense', 'issue'),
+            ('sense', 'link'),
+        )
+        

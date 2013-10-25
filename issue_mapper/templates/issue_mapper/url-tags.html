@@ -11,7 +11,14 @@
             <a
                 data-url="{% url 'popup_ajax' 'tag-actions' 'link' link.id %}"
                 target="_blank"
-                href="{{ link.issue.get_absolute_url }}"><i class="icon-info-sign"></i>&nbsp;{{ link.issue.friendly_text_no_punct }}{% if link.weight_non_zero %} {{ link.weight_non_zero }}{% endif %}</a></li>
+                style="display:inline-block; position:relative;"
+                href="{{ link.issue.get_absolute_url }}"><i class="icon-info-sign"></i>&nbsp;{{ link.issue.friendly_text_no_punct }}
+                <span class="tag-stats" style="">
+                    {% if link.weight_non_zero %}<span class="muted small-pill">{{ link.weight_non_zero }} relevance</span>{% endif %}
+                    {% if link.support_no_count %}&nbsp;<span class="muted small-pill">+{{ link.support_no_count }} supporting <b>no</b></span>{% endif %}
+                    {% if link.support_yes_count %}&nbsp;<span class="muted small-pill">+{{ link.support_yes_count }} supporting <b>yes</b></span>{% endif %}
+                </span>
+            </a></li>
     {% endfor %}
     {% if item.taggable_object.quotes.all.count %}
         <li class="quotes real-quotes-tag">

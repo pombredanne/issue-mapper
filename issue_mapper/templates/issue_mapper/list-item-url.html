@@ -10,7 +10,8 @@
             title=""
         /></div>{% endif %}
     <div style="float:left; {% if item.object.og_image_thumbnail %}width:87%;{% else %}width:100%;{% endif %}">
-        <div class="issue-link"><a href="{{ item.object.url }}" target="_blank" title="{{ item.object.id }}">{{ item.object.better_display_text|safe }}</a>&nbsp;<span class="muted">({{ item.object.domain }})</span></div>
+        <div class="issue-link"><a href="{{ item.object.url }}" target="_blank" title="{{ item.object.id }}">{% adminlink item.object 'title' %}{{ item.object.better_display_text|safe }}{% endadminlink %}</a>
+            &nbsp;<span class="muted">({{ item.object.domain }}) <a href="{% url 'link' item.object.id %}" title="perma-link"><i class="icon-link"></i></a></span></div>
         <div class="issue-details">
             <span>submitted {{ item.object.created|pretty_date|lower }}{% if not request.context and item.object.context %}
                 in <a class="context-filter-link" href="/c/{{ item.object.context.slug }}/">{{ item.object.context.friendly_name|safe }}</a>{% endif %}</span>

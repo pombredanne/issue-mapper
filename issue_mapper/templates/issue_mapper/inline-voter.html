@@ -2,6 +2,7 @@
     {% if object.votable and priviledges.can.vote_link %}
         <i
             class="icon-chevron-up vote-link upvote-link {% if object.upvoted %}upvote-link-selected{% endif %} {%if not settings.IM_ALLOW_SELF_VOTE and object.by_current_user %}vote-link-disabled{% endif %}"
+            title="{{ up_title }}"
             vote-url="{% url 'process_vote' object.vote_type object.id 'up' %}"></i>
     {% else %}
         <i
@@ -12,6 +13,7 @@
     {% if object.votable and priviledges.can.vote_link %}
         <i
             class="icon-chevron-down vote-link downvote-link {% if object.downvoted %}downvote-link-selected{% endif %} {%if not settings.IM_ALLOW_SELF_VOTE and object.by_current_user %}vote-link-disabled{% endif %}"
+            title="{{ down_title }}"
             vote-url="{% url 'process_vote' object.vote_type object.id 'down' %}"></i>
     {% else %}
         <i

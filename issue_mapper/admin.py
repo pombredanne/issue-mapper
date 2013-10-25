@@ -353,6 +353,7 @@ class IssueAdmin(admin_steroids.BetterRawIdFieldsModelAdmin):
     raw_id_fields = (
         'creator',
         'contexts',
+        'logic_context',
         #'url',
     )
     fields = (
@@ -366,6 +367,7 @@ class IssueAdmin(admin_steroids.BetterRawIdFieldsModelAdmin):
         'view_count',
         'cached_weight',
         'contexts',
+        'logic_context',
         links_field,
     )
     readonly_fields = (
@@ -1328,3 +1330,19 @@ class CandidateAdmin(
     )
 
 site.register(models.Candidate, CandidateAdmin)
+
+class TripleVoteAdmin(
+    admin_steroids.BetterRawIdFieldsModelAdmin,
+    admin_steroids.FormatterModelAdmin
+    ):
+    list_display = (
+        'id',
+        'triple',
+        'person',
+        'weight',
+    )
+    raw_id_fields = (
+        'triple',
+        'person',
+    )
+site.register(models.TripleVote, TripleVoteAdmin)

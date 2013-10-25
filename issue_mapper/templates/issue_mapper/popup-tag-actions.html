@@ -1,8 +1,29 @@
 {% load issue_mapper %}
 <div style="text-align:center;" {% if not priviledges.can.vote_link %}class="readonly-votes"{% endif %}>
-    {% inline_voter obj %}
+    {% inline_voter obj 'this issue is relevant to the link' 'this issue is irrelevant to the link' %}
     {% if priviledges.can.vote_link %}Is this tag correct?{% endif %}
 </div>
+{% if obj.issue %}
+    <div style="text-align:center; margin-top:10px;">
+        <a
+            {% if request.user.is_authenticated %}
+                ajax-url="{% url 'process_link_vote' obj.id 'supports-no' %}"
+            {% else %}
+                data-reveal-id="{% url 'login_register' %}"
+            {% endif %}
+            class="support-voter btn {% if obj.user_supports_no %}btn-primary{% else %}btn-default{% endif %} btn-xs"
+            title="{% if obj.user_supports_no %}you believe this link supports the 'no' position{% else %}click if you believe this link supports the 'no' position{% endif %}">
+                {% if obj.total_supports_no %} +{{ obj.total_supports_no }}{% endif %} supports <b>no</b></a>&nbsp;<a
+            {% if request.user.is_authenticated %}
+                ajax-url="{% url 'process_link_vote' obj.id 'supports-yes' %}"
+            {% else %}
+                data-reveal-id="{% url 'login_register' %}"
+            {% endif %}
+            class="support-voter btn {% if obj.user_supports_yes %}btn-primary{% else %}btn-default{% endif %} btn-xs"
+            title="{% if obj.user_supports_yes %}you believe this link supports the 'yes' position{% else %}click if you believe this link supports the 'yes' position{% endif %}">
+                {% if obj.total_supports_yes %} +{{ obj.total_supports_yes }}{% endif %} supports <b>yes</b></a>
+    </div>
+{% endif %}
 {% if obj.person_issue_links %}
     <ul class="popup-wrt-issue-links">
     {% for issue_link in obj.person_issue_links %}

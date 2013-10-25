@@ -27,6 +27,7 @@ QUOTE = 'quote'
 QUOTES = 'quotes'
 CONTEXT = 'context'
 CONTEXTS = 'contexts'
+RATIONALE = 'rationale'
 PERSON = 'person'
 PEOPLE = 'people'
 URL = 'url'
@@ -46,6 +47,7 @@ QUESTION_TYPES = (
     LINK,
     URL,
     MATCHES,
+    RATIONALE,
 )
 
 # Vote.
@@ -57,9 +59,13 @@ VOTE_CHOICES = (
 )
 UPVOTE_NAME = 'up'
 DOWNVOTE_NAME = 'down'
+SUPPORTS_NO_NAME = 'supports-no'
+SUPPORTS_YES_NAME = 'supports-yes'
 VOTE_NAME_TO_VALUE = {
     UPVOTE_NAME: UPVOTE,
-    DOWNVOTE_NAME: DOWNVOTE
+    DOWNVOTE_NAME: DOWNVOTE,
+    SUPPORTS_NO_NAME: 0,
+    SUPPORTS_YES_NAME: 0,
 }
 
 # Http.
@@ -255,6 +261,10 @@ SORT_BY_CREATED_ASC = 'sort_by_created_asc'
 SORT_BY_CREATED_DSC = 'sort_by_created_dsc'
 SORT_BY_LINKS_DSC = 'sort_by_links_dsc'
 SORT_BY_LINKS_ASC = 'sort_by_links_asc'
+SORT_BY_SUPPORT_YES_DSC = 'sort_by_support_yes_dsc'
+SORT_BY_SUPPORT_YES_ASC = 'sort_by_support_yes_asc'
+SORT_BY_SUPPORT_NO_DSC = 'sort_by_support_no_dsc'
+SORT_BY_SUPPORT_NO_ASC = 'sort_by_support_no_asc'
 
 ROLE_LEVEL_FEDERAL = 'federal'
 ROLE_LEVEL_STATE = 'state'
@@ -288,6 +298,9 @@ DISAGREE = 'disagree'
 FALSE = 'false'
 TRUE = 'true'
 
+YES = 'yes'
+NO = 'no'
+
 UNKNOWN = 'unknown'
 
 QUESTION_PHRASING1 = 'phrasing1' # Joe believes X.
@@ -312,3 +325,10 @@ PERM_TAG_VOTE = 'perm_vote_tag'
 PERM_QUOTE_SUBMIT = 'perm_submit_quote'
 PERM_QUOTE_FLAG = 'perm_flag_quote'
 PERM_QUOTE_VOTE = 'perm_vote_quote'
+
+SUPPORTS = 'supports'
+SUPPORTS_YES = 'supports yes'
+SUPPORTS_NO = 'supports no'
+SUPPORTED_YES_BY = 'supported yes by'
+SUPPORTED_NO_BY = 'supported no by'
+BECAUSE = 'because'

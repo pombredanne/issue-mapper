@@ -4,6 +4,7 @@ import urlparse
 import urllib
 import time
 import random
+import json
 
 import settings as _settings
 
@@ -24,6 +25,8 @@ import django
 from django.utils.feedgenerator import Rss201rev2Feed
 
 from jsonview.decorators import json_view
+
+from sense import models as sm
 
 import forms
 import models
@@ -180,7 +183,7 @@ class BaseIssueView(object):
             (k[1:] if k.startswith('-') else k,v)
             for k,v in self.sort_options
         ).keys()
-        print 'sort_options:',sort_options
+        #print 'sort_options:',sort_options
         default_sort = self.sort_options[0][0] if self.sort_options else ''
         sort = self.request.GET.get('sort', default_sort).strip().split(',')
         _sort = []
@@ -689,13 +692,32 @@ def process_vote(request, object_id, object_type, vote_type):
 #    print 'object:',object
     
     if object_cls is models.Link:
-        object_vote, _ = models.LinkVote.objects.get_or_create(
-            link=object,
-            voter=person,
-            defaults=dict(vote=vote))
-        object_vote.vote = vote
-        object_vote.save()
-        object = object_vote.link
+        if vote_type in (c.SUPPORTS_NO_NAME, c.SUPPORTS_YES_NAME):
+            p = c.SUPPORTS
+            if vote_type == c.SUPPORTS_NO_NAME:
+                o = c.NO
+            else:
+                o = c.YES
+            triple = models.get_triple(s=object, p=p, o=o)
+            vote, vote_created = models.TripleVote.objects.get_or_create(
+                triple=triple,
+                person=person,
+                defaults=dict(weight=1)
+            )
+            if not vote_created:
+                vote.weight = 1 - vote.weight
+                vote.save()
+            return HttpResponse(
+                content=json.dumps({'success':True, 'weight':vote.weight}),
+                content_type='application/json')
+        else:
+            object_vote, _ = models.LinkVote.objects.get_or_create(
+                link=object,
+                voter=person,
+                defaults=dict(vote=vote))
+            object_vote.vote = vote
+            object_vote.save()
+            object = object_vote.link
 #    elif object_cls is models.URL:
 #        object_vote, _ = models.URLVote.objects.get_or_create(
 #            url=object,
@@ -1276,6 +1298,8 @@ class BaseListViewSimple(ListView):
     
     show_people = False
     
+    show_rationale = True
+    
     show_elections = True
     
     show_replies = False
@@ -1286,6 +1310,10 @@ class BaseListViewSimple(ListView):
     show_comment_replies = True
     
     show_keyword_search = True
+    
+    show_submit_link_button = True
+    
+    show_create_rationale_button = False
 
     @property
     def context_filter(self):
@@ -1356,30 +1384,37 @@ class BaseListViewSimple(ListView):
             return [(c.SORT_BY_MATCH, 'Match Percent')]
         elif self.type == c.PERSON:
             return [
-                (c.SORT_BY_COVERAGE_ASC, 'Coverage - Ascending'),
-                (c.SORT_BY_COVERAGE_DSC, 'Coverage - Descending'),
-                (c.SORT_BY_MAGIC_ASC, 'Magic - Ascending'),
-                (c.SORT_BY_MAGIC_DSC, 'Magic - Descending'),
-                (c.SORT_BY_MATCH_ASC, 'Match Percent - Ascending'),
-                (c.SORT_BY_MATCH_DSC, 'Match Percent - Descending'),
-                (c.SORT_BY_LINKS_DSC, 'Links - Descending'),
-                (c.SORT_BY_LINKS_ASC, 'Links - Ascending'),
+                (c.SORT_BY_COVERAGE_ASC, 'Least Covered'),
+                (c.SORT_BY_COVERAGE_DSC, 'Most Covered'),
+                (c.SORT_BY_MAGIC_ASC, 'Least Popular'),
+                (c.SORT_BY_MAGIC_DSC, 'Most Popular'),
+                (c.SORT_BY_MATCH_ASC, 'Least Match'),
+                (c.SORT_BY_MATCH_DSC, 'Highest Match'),
+                (c.SORT_BY_LINKS_DSC, 'Most Links'),
+                (c.SORT_BY_LINKS_ASC, 'Least Links'),
             ]
         elif self.type == c.LINK:
-            return [
-                (c.SORT_BY_MAGIC_ASC, 'Magic - Ascending'),
-                (c.SORT_BY_MAGIC_DSC, 'Magic - Descending'),
+            opts = [
+                (c.SORT_BY_MAGIC_ASC, 'Least Popular'),
+                (c.SORT_BY_MAGIC_DSC, 'Most Popular'),
                 (c.SORT_BY_TOP_ASC, 'Most downvoted'),
                 (c.SORT_BY_TOP_DSC, 'Most upvoted'),
                 (c.SORT_BY_CREATED_DSC, 'Newest'),
                 (c.SORT_BY_CREATED_ASC, 'Oldest'),
             ]
+            issue = self.issue_filter
+            if issue:
+                opts.extend([
+                    (c.SORT_BY_SUPPORT_YES_DSC, 'Most Supporting Yes'),
+                    (c.SORT_BY_SUPPORT_YES_ASC, 'Least Supporting Yes'),
+                    (c.SORT_BY_SUPPORT_NO_DSC, 'Most Supporting No'),
+                    (c.SORT_BY_SUPPORT_NO_ASC, 'Least Supporting No'),
+                ])
+            return opts
         return []
     
     @property
     def sort_default(self):
-#        sort_options = self.sort_options
-#        if sort_options:
         return c.SORT_BY_MAGIC_DSC
     
     @property
@@ -1526,6 +1561,14 @@ class BaseListViewSimple(ListView):
                 pre_url + reverse('person_list') + qs,
                 t == c.PERSON,
             ))
+        if self.show_rationale:
+            lst.append((
+                c.RATIONALE,
+                c.RATIONALE,
+                self.get_rationale_queryset(form=form),
+                pre_url + reverse('rationale_list') + qs,
+                t == c.RATIONALE,
+            ))
         if self.show_replies:
             lst.append((
                 c.REPLY,
@@ -1558,6 +1601,8 @@ class BaseListViewSimple(ListView):
         
         context['form'] = self.form
         context['sort_options'] = self.sort_options
+        context['show_submit_link_button'] = self.show_submit_link_button
+        context['show_create_rationale_button'] = self.show_create_rationale_button
         context['sort'] = self.sort
         context['title'] = self.title
         context['person_filter'] = person_filter
@@ -1588,6 +1633,12 @@ class BaseListViewSimple(ListView):
         #return 'issue'
         #return 'issue-without-person'
         return 'person-without-issue'
+    
+    def get_rationale_queryset(self, flb=None, form=None):
+        request = self.request
+        q = sm.Context.objects.get_visible(request.user)
+        q = q.order_by('name')
+        return q
     
     def get_link_queryset(self, flb=None, form=None):
         request = self.request
@@ -2050,6 +2101,14 @@ class BaseListViewSimple(ListView):
                     q = q.order_by('-url_contexts__created', 'url_contexts__rand')
                 else:
                     q = q.order_by('-created', 'rand')
+            elif sort == c.SORT_BY_SUPPORT_YES_DSC:
+                q = q.order_by('-links__support_yes_count')
+            elif sort == c.SORT_BY_SUPPORT_YES_ASC:
+                q = q.order_by('links__support_yes_count')
+            elif sort == c.SORT_BY_SUPPORT_NO_DSC:
+                q = q.order_by('-links__support_no_count')
+            elif sort == c.SORT_BY_SUPPORT_NO_ASC:
+                q = q.order_by('links__support_no_count')
         elif self.type == c.ISSUE:
             q = self.get_issue_queryset(form=form)
         elif self.type == c.PERSON:
@@ -2084,6 +2143,8 @@ class BaseListViewSimple(ListView):
             q = self.get_reply_queryset(form=form)
         elif self.type == c.ELECTION:
             q = self.get_election_queryset(form=form)
+        elif self.type == c.RATIONALE:
+            q = self.get_rationale_queryset(form=form)
         else:
             raise Exception, 'Unknown type: %s' % (self.type,)
         
@@ -2232,6 +2293,35 @@ class LinkListView(BaseListViewSimple):
             q=self.q,
             show_search_results=True,
             rss_urls=[('RSS', rss_url)],
+        ))
+        return context
+
+class RationaleListView(BaseListViewSimple):
+
+    form_class = forms.RationaleListForm
+    
+    show_view_all_link = False
+    
+    show_create_rationale_button = True
+    
+    show_people = True
+
+    @property
+    def title(self):
+        return 'Rationale'
+    
+    @property
+    def type(self):
+        return c.RATIONALE
+    
+    def get_context_data(self, *args, **kwargs):
+        context = super(RationaleListView, self).get_context_data(*args, **kwargs)
+        context.update(dict(
+            selected_issue_type=c.RATIONALE,
+            noun=c.RATIONALE,
+            q=self.q,
+            show_search_results=True,
+            #rss_urls=[('RSS', rss_url)],
         ))
         return context
 
@@ -2689,4 +2779,47 @@ class ContextsView(BaseTemplateView):
         context = super(ContextsView, self).get_context_data(*args, **kwargs)
         context['contexts'] = models.Context.objects.get_active_public()
         return context
+
+class RationaleEditView(BaseTemplateView):
     
+    title = 'Edit Rationale'
+    
+    template_name = 'issue_mapper/rationale-edit.html'
+    
+    @property
+    def rationale(self):
+        rationale_id = self.kwargs['rationale_id']
+        q = sm.Context.objects\
+            .get_visible(user=self.request.user)\
+            .filter(id=rationale_id)
+        if q.count():
+            return q[0]
+    
+    def get_context_data(self, *args, **kwargs):
+        context = super(RationaleEditView, self).get_context_data(*args, **kwargs)
+        context['rationale'] = self.rationale
+        context['allow_editing'] = self.rationale.allow_editing(self.request.user)
+        return context
+    
+    def post(self, *args, **kwargs):
+        return self.get(self, *args, **kwargs)
+    
+    def get(self, *args, **kwargs):
+        if 'rationale_id' not in self.kwargs:
+            q = sm.Context.objects.filter(owner=self.request.user)
+            context, _ = sm.Context.objects.get_or_create(
+                owner=self.request.user, name='Rationale-%i' % q.count())
+            return HttpResponseRedirect(reverse('rationale_edit', args=(context.id,)))
+        rationale = self.rationale
+        if not rationale:
+            raise Http404
+        
+        # Process AJAX post request.
+        if rationale.allow_editing(self.request.user):
+            if 'name' in self.request.POST and 'value' in self.request.POST:
+                setattr(rationale, self.request.POST['name'], self.request.POST['value'])
+                rationale.save()
+                return HttpResponse(content='1', content_type='text/html')
+        
+        return super(RationaleEditView, self).get(*args, **kwargs)
+        

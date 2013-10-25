@@ -88,6 +88,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1b1b1b', end
 .popup-body input[type=checkbox].form-control{
     display:inline;
 }
+input[type=checkbox].form-control{
+    height:15px;
+    width:15px;
+}
 #footer .container{
     margin-top:0px;
 }
@@ -1404,6 +1408,24 @@ select[multiple=multiple]{
     moz-opacity: 0.5;
     -khtml-opacity: 0.5;
 }
+.tags li.real-tag .muted{
+    color:white;
+    opacity:0.9;
+}
+.tags li.real-tag .tag-stats{
+    display:none;
+    position:absolute;
+    white-space:nowrap;
+    z-index:10;
+    padding-right:10px;
+    padding-left:10px;
+    background-color:rgb(100, 198, 96);
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+}
+.tags li.real-tag:hover .tag-stats{
+    background-color:rgb(58, 148, 55);
+}
 /* Quote tags. */
 .tags li.real-quotes-tag a{
     background: #D7A7F2;/*#C07AE7;*/
@@ -1533,4 +1555,38 @@ a:hover .context-filter{
 }
 .alert{
     margin-top: 10px;
+}
+.muted a .icon-link{
+    color:lightgray;
+}
+.muted a:hover .icon-link{
+    text-decoration:none;
+    color:gray;
+}
+.issue-link .inline-admin-link-container{
+    display:inline-block;
+}
+.small-pill{
+    border:1px solid lightgray;
+    border-radius:2px;
+    padding-left:4px;
+    padding-right:4px;
+}
+a.in-line-editable{
+    color:#333;
+    border-bottom:1px dashed #999;
+}
+a.in-line-editable:hover{
+    text-decoration:none;
+    color:black;
+}
+legend .label-xs{
+    display: inline-block;
+    vertical-align: middle;
+    font-size:50%;
+}
+.btn-selected{
+    color: rgb(51, 51, 51);
+    background-color: rgb(235, 235, 235);
+    border-color: rgb(173, 173, 173);
 }

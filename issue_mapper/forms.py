@@ -235,7 +235,10 @@ from django_localflavor_us.us_states import USPS_CHOICES
 
 class ElectionListForm(SearchListForm):
     pass
-    
+
+class RationaleListForm(SearchListForm):
+    pass
+
 class LinkListForm(SearchListForm):
     
 #    state = django.forms.MultipleChoiceField(

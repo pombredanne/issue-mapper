@@ -209,6 +209,10 @@
                                             {% endif %}
                                         </a>
                                     </div>
+                                {% case "rationale" %}
+                                    <div class="col-md-10">
+									    <div class="issue-link"><a href="{% url 'rationale_edit' item.id %}" target="_blank" title="">{{ item.name|safe }}</a></div>
+									</div>
                                 {% case "matches" %}
                                     <div class="col-md-1" style="text-align:center;">
                                         {% person_photo item.matchee %}
@@ -294,6 +298,21 @@
                     </a>
                 {% endif %}
                 
+                {% if show_create_rationale_button %}
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'rationale_create' %}"
+                        class="btn btn-info full-width-sidebar-btn">
+                        Create Rationale <i class="icon-circle-arrow-right icon-white"></i>
+                    </a>
+                {% else %}
+                    <a data-reveal-id="{% url 'login_register' %}"
+                        class="btn btn-info full-width-sidebar-btn">
+                        Create Rationale <i class="icon-circle-arrow-right icon-white"></i>
+                    </a>
+                {% endif %}
+                {% endif %}
+                
+                {% if show_submit_link_button %}
                 {% if request.user.is_authenticated %}
                     {% if selected_issue_type == 'link' and priviledges.can.submit_link %}
                         <button
@@ -308,8 +327,9 @@
                         type="button"
                         class="btn btn-warning full-width-sidebar-btn"
                         data-reveal-id="{% url 'login_register' %}">
-                        Submit link <i class="icon-circle-arrow-right"></i>
+                        Submit Link <i class="icon-circle-arrow-right"></i>
                     </button>
+                {% endif %}
                 {% endif %}
                 
                 {% if sort_options %}

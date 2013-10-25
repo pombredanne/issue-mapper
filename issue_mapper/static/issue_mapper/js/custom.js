@@ -35,7 +35,20 @@
         
         bind_inline_link_voters: function(){
             
-        	$('.change-context-filter:not([qtip-bound]').each(function(i){
+            $('.real-issue-tag:not([stats-bound])').each(function(){
+                var el = $(this);
+                el.attr('stats-bound', true);
+                el.bind('mouseover', $.debounce(100, function(){
+                    var el = $(this);
+                    $('.tag-stats', el).fadeIn('fast').css("display","inline-block");
+                }));
+                el.bind('mouseout', $.debounce(500, function(){
+                    var el = $(this);
+                    $('.tag-stats', el).fadeOut('fast');
+                }));
+            });
+            
+            $('.change-context-filter:not([qtip-bound])').each(function(i){
                 var el = $(this);
                 el.attr('qtip-bound', true);
                 el.qtip({
@@ -80,7 +93,32 @@
                     }
                 });
             });
-        	
+
+            // Bind supports yes/no voter buttons.
+            $('a.support-voter:not([bound])').each(function(i){
+                var el = $(this);
+                el.attr('bound', true);
+                el.click(function(){
+                    var el = $(this);
+                    var url = el.attr('ajax-url');
+                    $.ajax({url: url})
+                    .then(function(content){
+                        // Success!
+                        if(content.weight == 1){
+                            el.removeClass('btn-default');
+                            el.addClass('btn-primary');
+                        }else{
+                            el.addClass('btn-default');
+                            el.removeClass('btn-primary');
+                        }
+                    }, function(xhr, status, error) {
+                        // Failure!
+                        //api.set('content.text', status + ': ' + error);
+                        //TODO
+                    });
+                });
+            });
+            
             $('li.real-tag a:not([qtip-bound])').each(function(i){
                 var el = $(this);
                 el.attr('qtip-bound', true);
