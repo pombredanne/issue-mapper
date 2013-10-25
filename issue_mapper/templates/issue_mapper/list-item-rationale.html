@@ -1,0 +1,6 @@
+{% load issue_mapper urls %}
+{% if full %}<div class="issue-container well shadow">{% endif %}
+<div class="col-md-10">
+    <div class="issue-link"><a href="{% url 'rationale_edit' item.id %}" target="_blank" title="">{{ item.name|safe }}</a></div>
+</div>
+{% if full %}<div class="clearfix"></div></div>{% endif %}

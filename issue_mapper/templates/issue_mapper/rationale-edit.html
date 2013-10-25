@@ -1,0 +1,80 @@
+{% extends "issue_mapper/base.html" %}
+{% load issue_mapper i18n %}
+{% block container-classes %}container-full{% endblock %}
+{% block body %}
+    <fieldset>
+        <form method="post" class="rationale-editor">
+	        <legend style="margin-bottom:0;">
+	            {% if allow_editing %}
+	            <a
+	                href="#"
+	                id="context_name"
+	                class="in-line-editable"
+	                data-type="text"
+	                data-pk="{{ rationale.id }}"
+	                data-name="name"
+	                data-url="{% url 'rationale_edit' rationale.id %}"
+	                data-original-title="Enter name">{{ rationale.name }}</a>
+	            {% else %}
+	                {{ rationale.name }}
+	            {% endif %}
+	            {#<span class="label label-info label-xs">{{ rationale.accessibility }}</span>#}
+	            <div class="btn-group btn-group-xs accessibility-buttons">
+				    <button
+				        type="button"
+				        class="btn btn-default {% if rationale.accessibility == 'public' %}btn-selected{% endif %}"
+				        data-name="accessibility"
+				        data-url="{% url 'rationale_edit' rationale.id %}"
+				        data-value="public">public</button>
+				    <button
+				        type="button"
+				        class="btn btn-default {% if rationale.accessibility == 'private' %}btn-selected{% endif %}"
+				        data-name="accessibility"
+				        data-url="{% url 'rationale_edit' rationale.id %}"
+				        data-value="private">private</button>
+				</div>
+	        </legend>
+	        <div class="muted">
+	            managed by {{ rationale.owner.username }}
+	            
+	        </div>
+            <br/>
+            <p>
+            stuff
+            </p>
+            <br/>
+        </form>
+    </fieldset>
+{% endblock %}
+{% block body-js %}
+	<script type="text/javascript">
+		(function($){
+			$(document).ready(function(){
+				$.fn.editable.defaults.mode = 'inline';
+			    {% if allow_editing %}
+			        $('#context_name').editable({
+			        	params: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+			        });
+			        $('.accessibility-buttons button').click(function(){
+			        	var el = $(this);
+			        	var parent = el.parent();
+			        	$.ajax({
+			        		url: el.data('url'),
+			        		method:'post',
+			        		dataType: 'html',
+			        		data:{
+			        			csrfmiddlewaretoken: '{{ csrf_token }}',
+			        			name: el.data('name'),
+			        			value: el.data('value')
+			        		},
+			        		success:function(){
+			        			$('button', parent).removeClass('btn-selected');
+                                el.addClass('btn-selected');
+			        		}
+			        	});
+			        });
+			    {% endif %}
+			});
+		})(jQuery);
+	</script>
+{% endblock %}
