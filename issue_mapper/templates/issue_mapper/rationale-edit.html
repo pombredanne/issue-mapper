@@ -9,6 +9,8 @@
 	            <a
 	                href="#"
 	                id="context_name"
+	                alt="Click to edit"
+	                title="Click to edit"
 	                class="in-line-editable"
 	                data-type="text"
 	                data-pk="{{ rationale.id }}"
@@ -36,13 +38,16 @@
 	        </legend>
 	        <div class="muted">
 	            managed by {{ rationale.owner.username }}
-	            
 	        </div>
-            <br/>
-            <p>
-            stuff
-            </p>
-            <br/>
+            <div>
+            <ul id="top-sense-editor" class="list-group" style="margin-top:15px;">{% rationale_triple_list rationale triples %}</ul>
+            {%comment%}
+            <ul class="list-group" style="margin-top:15px;">
+			    <li class="list-group-item">allowing patenting of dna, causes, creation of patented GM crops</li>
+			    <li class="list-group-item muted">new</li>
+			</ul>
+			{%endcomment%}
+            </div>
         </form>
     </fieldset>
 {% endblock %}
@@ -51,6 +56,21 @@
 		(function($){
 			$(document).ready(function(){
 				$.fn.editable.defaults.mode = 'inline';
+				$('#top-sense-editor').sensetree({
+					context_id: {{ rationale.id }},
+					{#triple_id_list: [{% for triple in triples %}{% if not forloop.first %},{% endif %}{{ triple.id }}{% endfor %}],#}
+					get_triple_url: "{% url 'get_rationale_triple' rationale.id 'triple' 'get' %}",
+					create_triple_url: "{% url 'create_rationale_triple' rationale.id 'triple' 'create' %}",
+					search_triple_url: "{% url 'search_rationale_triple' rationale.id 'triple' 'search' %}",
+					search_sense_url: "{% url 'search_rationale_sense' rationale.id 'sense' 'search' %}",
+					search_all_url: "{% url 'search_rationale' rationale.id %}",
+					default_ul_classes: "list-group",
+					default_li_classes: "list-group-item",
+					allow_editing: {{ allow_editing|jsonify }},
+					extra:{
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+					}
+				});
 			    {% if allow_editing %}
 			        $('#context_name').editable({
 			        	params: {csrfmiddlewaretoken: '{{ csrf_token }}'}

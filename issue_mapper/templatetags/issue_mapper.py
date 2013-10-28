@@ -1,6 +1,10 @@
 import uuid
 import random
 
+from django.core.serializers import serialize
+from django.db.models.query import QuerySet
+from django.utils import simplejson
+from django.template import Library
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -23,6 +27,12 @@ from .. import models
 c = models.c
 
 register = Library()
+
+@register.filter
+def jsonify(object):
+    if isinstance(object, QuerySet):
+        return serialize('json', object)
+    return simplejson.dumps(object)
 
 @register.filter('klass')
 def klass(o):
@@ -508,4 +518,55 @@ def url_tags(obj):
     return loader.render_to_string('issue_mapper/url-tags.html', dict(
         item=obj,
     ), context_instance=RequestContext(request))
-    
+
+@register.simple_tag
+def rationale_triple_list(rationale, triples):
+    request = get_current_request()
+    return loader.render_to_string('issue_mapper/rationale-triple.html', dict(
+        rationale=rationale,
+        triples=triples,
+    ), context_instance=RequestContext(request))
+
+@register.simple_tag
+def triple_edit_switch(rationale, triple, part):
+    assert part in ('subject', 'predicate', 'object')
+    request = get_current_request()
+    part_id = getattr(triple, '%s_common_id' % part)
+    part_text = getattr(triple, '%s_text' % part)
+    part_raw_text = getattr(triple, '%s_text_raw' % part)
+    is_triple = part in ('subject', 'object') and getattr(triple, '%s_triple' % part)
+    return loader.render_to_string('issue_mapper/triple-edit-switch.html', dict(
+        rationale=rationale,
+        triple=triple,
+        part=part,
+        is_triple=is_triple,
+        part_id=part_id,
+        part_text=part_text,
+        part_raw_text=part_raw_text,
+    ), context_instance=RequestContext(request))
+
+class SetVarNode(template.Node):
+    def __init__(self, var_name):
+        self.var_name = var_name
+    def render(self, context):
+        import uuid
+        print 'self.var_name:',self.var_name
+        context[self.var_name] = '_'+str(uuid.uuid4()).replace('-', '')
+        return ''
+
+@register.tag
+def setuuid(parser, token):
+    # This version uses a regular expression to parse tag contents.
+    import re
+    try:
+        # Splitting by None == splitting by spaces.
+        tag_name, arg = token.contents.split(None, 1)
+    except ValueError:
+        raise template.TemplateSyntaxError, "%r tag requires arguments" % token.contents.split()[0]
+    m = re.search(r'as (\w+)', arg)
+    if not m:
+        raise template.TemplateSyntaxError, "%r tag had invalid arguments" % tag_name
+    var_name = m.groups()[0]
+#    if not (new_val[0] == new_val[-1] and new_val[0] in ('"', "'")):
+#        raise template.TemplateSyntaxError, "%r tag's argument should be in quotes" % tag_name
+    return SetVarNode(var_name)

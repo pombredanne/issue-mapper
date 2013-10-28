@@ -2798,6 +2798,7 @@ class RationaleEditView(BaseTemplateView):
     def get_context_data(self, *args, **kwargs):
         context = super(RationaleEditView, self).get_context_data(*args, **kwargs)
         context['rationale'] = self.rationale
+        context['triples'] = self.rationale.triples.filter(deleted__isnull=True).order_by('_text', '-id')
         context['allow_editing'] = self.rationale.allow_editing(self.request.user)
         return context
     
@@ -2814,12 +2815,142 @@ class RationaleEditView(BaseTemplateView):
         if not rationale:
             raise Http404
         
+        def get_or_create_sense(id, text):
+            if id:
+                return sm.Sense.objects.get(id=id)
+            elif text.startswith('triple:'):
+                return sm.Triple.objects.get(id=text.split(':')[-1])
+            else:
+                word, _ = sm.Word.objects.get_or_create(text=text.strip())
+                sense, _ = sm.Sense.objects.get_or_create(word=word, defaults=dict(definition=text))
+                return sense
+        
+        def get_or_create_triple(subject, predicate, object):
+            if isinstance(subject, sm.Sense):
+                subject_triple = None
+            elif isinstance(subject, sm.Triple):
+                subject_triple = subject
+                subject = None
+            else:
+                raise NotImplementedError
+            
+            if isinstance(object, sm.Sense):
+                object_triple = None
+            elif isinstance(object, sm.Triple):
+                object_triple = object
+                object = None
+            else:
+                raise NotImplementedError
+            
+            print 'get_or_create_triple:', subject, subject_triple, predicate, object, object_triple
+            triple, _ = sm.Triple.objects.get_or_create(
+                subject=subject,
+                subject_triple=subject_triple,
+                predicate=predicate,
+                object=object,
+                object_triple=object_triple)
+            return triple
+        
         # Process AJAX post request.
-        if rationale.allow_editing(self.request.user):
-            if 'name' in self.request.POST and 'value' in self.request.POST:
-                setattr(rationale, self.request.POST['name'], self.request.POST['value'])
-                rationale.save()
-                return HttpResponse(content='1', content_type='text/html')
+        action = self.kwargs.get('action')
+        subtype = self.kwargs.get('subtype')
+        print 'action:',action,'subtype:',subtype
+        if action == 'search':
+            q = self.request.GET.get('term', '').strip()
+            if not q:
+                raise Http404
+            triples = sm.Triple.search_objects.search(q).filter(deleted__isnull=True)[:5]
+            #TODO:block caching?
+            return HttpResponse(
+                content=json.dumps([
+                    dict(label=triple.text(), value='triple:%i' % triple.id)
+                    for triple in triples
+                ]),
+                content_type='application/json')
+        elif rationale.allow_editing(self.request.user):
+            if subtype == 'triple':
+                if action == 'get':
+                    print 'triples:',self.request.REQUEST.keys()
+                    triples = [int(_) for _ in self.request.REQUEST.get('ids','').split(',') if _.strip()]
+                    print 'triples:',triples
+                    triples = sm.Triple.objects.filter(id__in=triples)
+                    return render_to_response(
+                        'issue_mapper/rationale-triple.html',
+                        dict(
+                            rationale=rationale,
+                            triples=triples,
+                        ),
+                        context_instance=RequestContext(self.request))
+                elif action == 'edit':
+                    # Change the text of a sense.
+                    name = self.request.REQUEST.get('name')
+                    pk = self.request.REQUEST.get('pk')
+                    model_type, model_id = pk.split(':')
+                    value = self.request.REQUEST.get('value')
+                    part = self.request.REQUEST.get('part')
+                    triple_id = self.request.REQUEST.get('triple_id')
+                    if model_type == 'sense':
+                        sense = get_object_or_404(sm.Sense, id=model_id, all_senses_contexts__id=rationale.id)
+                        word, _ = sm.Word.objects.get_or_create(text=value.strip())
+                        sense.word = word
+                        sense.save()
+                    elif model_type == 'triple':
+                        triple = get_object_or_404(sm.Triple, id=pk, all_triples_contexts__id=rationale.id)
+                        todo
+                    else:
+                        raise Http404
+                    print 'set name:',name,'pk:',pk,'value:',value
+                    return HttpResponse(content='1', content_type='text/html')
+                elif action == 'switch':
+                    # Change the sense used in a triple.
+                    name = self.request.REQUEST.get('name')
+                    pk = self.request.REQUEST.get('pk')
+                    model_type, model_id = pk.split(':')
+                    value = self.request.REQUEST.get('value')
+                    part = self.request.REQUEST.get('part')
+                    triple_id = self.request.REQUEST.get('triple_id')
+                    if model_type == 'sense':
+                        todo
+                        #sense = get_object_or_404(sm.Sense, id=model_id, all_senses_contexts__id=rationale.id)
+                        word, _ = sm.Word.objects.get_or_create(text=value.strip())
+                        sense.word = word
+                        sense.save()
+                    elif model_type == 'triple':
+                        triple = get_object_or_404(sm.Triple, id=pk, all_triples_contexts__id=rationale.id)
+                        todo
+                    else:
+                        raise Http404
+                    print 'set name:',name,'pk:',pk,'value:',value
+                    return HttpResponse(content='1', content_type='text/html')
+                elif action == 'delete':
+                    triple = sm.Triple.objects.get(id=self.request.REQUEST.get('id'))
+                    triple.deleted = timezone.now()
+                    triple.save()
+                    return HttpResponse(content='1', content_type='text/html')
+                elif action == 'create':
+                    print 'create'
+                    subject = get_or_create_sense(self.request.REQUEST.get('subject_id'), self.request.REQUEST.get('subject_text'))
+                    predicate = get_or_create_sense(self.request.REQUEST.get('predicate_id'), self.request.REQUEST.get('predicate_text'))
+                    object = get_or_create_sense(self.request.REQUEST.get('object_id'), self.request.REQUEST.get('object_text'))
+                    triple = get_or_create_triple(subject=subject, predicate=predicate, object=object)
+                    triple.deleted = None
+                    triple.save()
+                    triple_vote, _ = models.TripleVote.objects.get_or_create(triple=triple, person=self.request.user.person, weight=sm.c.YES)
+                    rationale.add_triple(triple)
+                    print 'triple:',triple
+                    #return HttpResponse(content='1', content_type='text/html')
+                    return render_to_response(
+                        'issue_mapper/rationale-triple.html',
+                        dict(
+                            rationale=rationale,
+                            triples=[triple],
+                        ),
+                        context_instance=RequestContext(self.request))
+            else:
+                if 'name' in self.request.REQUEST and 'value' in self.request.REQUEST:
+                    setattr(rationale, self.request.REQUEST['name'], self.request.REQUEST['value'])
+                    rationale.save()
+                    return HttpResponse(content='1', content_type='text/html')
         
         return super(RationaleEditView, self).get(*args, **kwargs)
         

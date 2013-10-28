@@ -1573,7 +1573,7 @@ a:hover .context-filter{
     padding-right:4px;
 }
 a.in-line-editable{
-    color:#333;
+    color:#999;
     border-bottom:1px dashed #999;
 }
 a.in-line-editable:hover{
@@ -1589,4 +1589,47 @@ legend .label-xs{
     color: rgb(51, 51, 51);
     background-color: rgb(235, 235, 235);
     border-color: rgb(173, 173, 173);
+}
+form input:first-child{
+    margin-left:-5px;
+}
+ul#top-sense-editor li a{
+    margin-left:5px;
+}
+ul#top-sense-editor li a:first-child{
+    margin-left:0;
+}
+ul#top-sense-editor .editable-input input{
+    margin-left:5px;
+}
+ul#top-sense-editor .new-triple-form{
+    margin-left: -5px;
+}
+ul#top-sense-editor a.icon-trash{
+    color:#999;
+    float:right;
+    margin-top:3px;
+}
+ul#top-sense-editor a.icon-trash:hover{
+    color:black;
+    text-decoration:none;
+}
+.delete-confirm{
+    float:right;
+    color:#666;
+    display:none;
+}
+ul#top-sense-editor .triple-element-text{
+    color:#777;
+}
+ul#top-sense-editor .triple-element-text:hover{
+    /*color:#666;*/
+    border-bottom:1px dashed #666;
+    cursor:pointer;
+}
+ul#top-sense-editor .sense-highlight{
+    color:#428BCA;
+}
+.triple-sense-buttons{
+    display:none;
 }

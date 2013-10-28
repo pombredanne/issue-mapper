@@ -17,6 +17,7 @@
                     href="{{ rss_url }}" />
             {% endfor %}
             {% compressed_css 'all' %}
+            {% compressed_js 'all' %}
         {% endblock head %}
     </head>
     <body>
@@ -83,7 +84,6 @@
                 </p>
             </div>
         </div>
-        {% compressed_js 'all' %}
 <script type="text/javascript">
 window.issue_mapper.COOKIE_BUTTONS_FLOAT = '{{ c.COOKIE_BUTTONS_FLOAT }}';
 </script>

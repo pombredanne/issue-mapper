@@ -1,0 +1,112 @@
+{% load issue_mapper %}
+{% setuuid as uuid %}
+<span
+    id="{{ uuid }}-triple-element-text"
+    class="triple-element-highlight triple-element-text triple-element-text-{{ part }}"
+    data-pk="{{ part_id }}"
+>{{ part_text }}</span>
+<span id="{{ uuid }}-buttons" class="triple-sense-buttons">
+    {% if not is_triple %}<button
+        class="btn btn-primary btn-xs edit-button">edit</button>&nbsp;{% endif %}<button
+        class="btn btn-primary btn-xs switch-button">switch</button>&nbsp;<button
+        class="btn btn-default btn-xs cancel-button">cancel</button>
+</span>
+<a
+    href="#"
+    id="{{ uuid }}-{{ part }}-edit"
+    alt="Click to edit"
+    title="Click to edit"
+    class="in-line-editable in-line-control-edit"
+    style="display:none;"
+    data-type="text"
+    data-pk="{{ part_id }}"
+    data-name="{{ part }}"
+    data-url="{% url 'edit_rationale_triple' rationale.id 'triple' triple.id part 'edit' %}"
+    data-original-title="Enter text">{{ part_raw_text }}</a>
+<a
+    href="#"
+    id="{{ uuid }}-{{ part }}-switch"
+    alt="Click to edit"
+    title="Click to edit"
+    class="in-line-editable in-line-control-switch"
+    style="display:none;"
+    data-type="text"
+    data-pk="{{ part_id }}"
+    data-name="{{ part }}"
+    data-url="{% url 'switch_rationale_triple' rationale.id 'triple' triple.id part 'switch' %}"
+    data-original-title="Enter text">{{ part_raw_text }}</a>
+<script type="text/javascript">
+    (function($){
+        $(document).ready(function(){
+        	
+            $('#{{ uuid }}-{{ part }}-edit').editable({
+                params: {csrfmiddlewaretoken: '{{ csrf_token }}'},
+                success: function(response, newValue){
+                    // Update all visible instances of sense.
+                    //$('#{{ uuid }}-triple-element-text').html(newValue);
+                    var pk = $('#{{ uuid }}-triple-element-text').attr('data-pk');
+                    $('.triple-element-text[data-pk="'+pk+'"]').html(newValue);
+                    var newValue2 = newValue.charAt(0).toUpperCase() + newValue.slice(1);
+                    $('.triple-element-text-subject[data-pk="'+pk+'"]').html(newValue2);
+                    var newValue3 = newValue + '.';
+                    $('.triple-element-text-object[data-pk="'+pk+'"]').html(newValue3);
+                    $('.in-line-control-edit[data-pk="'+pk+'"]').editable('setValue', newValue);
+                }
+            }).on('hidden', function(e, reason){
+                $('#{{ uuid }}-triple-element-text').show();
+                $('#{{ uuid }}-{{ part }}-edit').hide();
+                $('#{{ uuid }}-{{ part }}-switch').hide();
+                $('#{{ uuid }}-buttons').hide();
+            });
+            
+            $('#{{ uuid }}-{{ part }}-switch').editable({
+                params: {csrfmiddlewaretoken: '{{ csrf_token }}'},
+                success: function(response, newValue){
+                    //console.log('newvalue1:'+newValue);
+                }
+            }).on('hidden', function(e, reason){
+                $('#{{ uuid }}-triple-element-text').show();
+                $('#{{ uuid }}-{{ part }}-edit').hide();
+                $('#{{ uuid }}-{{ part }}-switch').hide();
+                $('#{{ uuid }}-buttons').hide();
+            });
+            
+            $('#{{ uuid }}-buttons .edit-button').click(function(){
+            	$('#{{ uuid }}-triple-element-text').hide();
+            	$('#{{ uuid }}-{{ part }}-edit').show().click();
+            	$('#{{ uuid }}-{{ part }}-switch').hide();
+            	$('#{{ uuid }}-buttons').hide();
+                return false;
+            });
+            $('#{{ uuid }}-buttons .switch-button').click(function(){
+                $('#{{ uuid }}-triple-element-text').hide();
+                $('#{{ uuid }}-{{ part }}-edit').hide();
+                $('#{{ uuid }}-{{ part }}-switch').show().click();
+                $('#{{ uuid }}-buttons').hide();
+                return false;
+            });
+            $('#{{ uuid }}-buttons .cancel-button').click(function(){
+                var el = $(this);
+                el.parent().fadeOut('fast');
+                return false;
+            });
+            $('#{{ uuid }}-triple-element-text')
+	            .bind('mouseover', function(){
+	                var el = $(this);
+	                $('.triple-element-text[data-pk="{{ part_id }}"]').addClass('sense-highlight');
+	                return false;
+	            })
+	            .bind('mouseout', function(){
+	                var el = $(this);
+	                $('.triple-element-text[data-pk="{{ part_id }}"]').removeClass('sense-highlight');
+	                return false;
+	            });
+            $('#{{ uuid }}-triple-element-text').click(function(){
+                var el = $(this);
+                var buttons = el.nextAll('.triple-sense-buttons').first();
+                buttons.fadeToggle('fast');
+                return false;
+            });
+        });
+    })(jQuery);
+</script>

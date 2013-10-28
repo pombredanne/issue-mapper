@@ -1,0 +1,46 @@
+{% load issue_mapper %}
+{% for triple in triples %}
+    {% setuuid as uuid %}
+    <li id="{{ uuid }}_li" class="list-group-item">
+        {% triple_edit_switch rationale triple 'subject' %}
+        {% triple_edit_switch rationale triple 'predicate' %}
+        {% triple_edit_switch rationale triple 'object' %}
+        <a
+            href="#"
+            class="icon-trash"
+            alt="Delete"
+            title="Delete"
+            ajax-url="{% url 'delete_rationale_triple' rationale.id 'triple' 'delete' %}?id={{ triple.id }}"></a>
+        <span class="delete-confirm">Delete?&nbsp;<button class="btn btn-success btn-xs">Yes</button>&nbsp;<button class="btn btn-danger btn-xs">No</button></span>
+        <script type="text/javascript">
+            (function($){
+                $(document).ready(function(){
+                    $('#{{ uuid }}_li .delete-confirm .btn-success').click(function(){
+                        var el = $('#{{ uuid }}_li .icon-trash');
+                        $.ajax({
+                            url:el.attr('ajax-url'),
+                            method:'post',
+                            dataType:'html',
+                            data:{
+                                csrfmiddlewaretoken: '{{ csrf_token }}'
+                            },
+                            success:function(){
+                                el.parent().remove();
+                            }
+                        });
+                        return false;
+                    });
+                    $('#{{ uuid }}_li .delete-confirm .btn-danger').click(function(){
+                        var el = $(this);
+                        el.parent().fadeOut('fast');
+                        return false;
+                    });
+                    $('#{{ uuid }}_li .icon-trash').click(function(){
+                        $('#{{ uuid }}_li .delete-confirm').fadeToggle('fast');
+                        return false;
+                    });
+                });
+            })(jQuery);
+        </script>
+    </li>
+{% endfor %}
