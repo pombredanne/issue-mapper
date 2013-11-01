@@ -12,6 +12,16 @@
             }
         },
         
+        update_footer_position: function(){
+        	var footer = $('#footer');
+            var body = $('body');
+            var win = $(window);//$(this); //this = window
+            if(win.height() > footer.position().top+footer.height()){
+                //footer.addClass('footer-fixed');
+                body.addClass('footer-fixed');
+            }
+        },
+        
         isValidDate: function(value, userFormat){
             var userFormat = userFormat || 'mm/dd/yyyy';
             var delimiter = /[^mdy]/.exec(userFormat)[0];
@@ -360,10 +370,8 @@
         
         var footer = $('#footer');
         var body = $('body');
-        if($(window).height() > footer.position().top+footer.height()){
-            //footer.addClass('footer-fixed');
-            body.addClass('footer-fixed');
-        }
+        
+        $(window).on('resize', window.issue_mapper.update_footer_position);
         
         $('#keyword-search-box').change(function(){
             var el = $(this);
@@ -705,6 +713,23 @@
         window.issue_mapper.bind_inline_link_voters();
         window.issue_mapper.bind_comment_forms();
         window.issue_mapper.bind_ajax_cross_links();
+        window.issue_mapper.update_footer_position();
+        
+	    $('.panel-open-close-button').click(function(){
+	        var el = $(this);
+	        var body = $('.panel-body', el.parent().parent());
+	        body.slideToggle(function(){
+		        if(body.is(":visible")){
+		        	el.addClass(el.attr('close-icon'));
+		        	el.removeClass(el.attr('open-icon'));
+		        }else{
+		        	el.removeClass(el.attr('close-icon'));
+		        	el.addClass(el.attr('open-icon'));
+		        }
+	        });
+	        return false;
+	    });
+	    
     });
     
 })(jQuery);

@@ -6280,6 +6280,8 @@ class Candidate(BaseModel):
     
     won = models.NullBooleanField(default=None, db_index=True)
     
+    votes = models.PositiveIntegerField(default=0)
+    
     class Meta:
         app_label = APP_LABEL
         ordering = ('election',)

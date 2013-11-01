@@ -535,11 +535,13 @@ def triple_edit_switch(rationale, triple, part):
     part_text = getattr(triple, '%s_text' % part)
     part_raw_text = getattr(triple, '%s_text_raw' % part)
     is_triple = part in ('subject', 'object') and getattr(triple, '%s_triple' % part)
+    is_predicate = part == 'predicate'
     return loader.render_to_string('issue_mapper/triple-edit-switch.html', dict(
         rationale=rationale,
         triple=triple,
         part=part,
         is_triple=is_triple,
+        is_predicate=is_predicate,
         part_id=part_id,
         part_text=part_text,
         part_raw_text=part_raw_text,

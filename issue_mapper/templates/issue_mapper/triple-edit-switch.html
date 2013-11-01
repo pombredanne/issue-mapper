@@ -4,10 +4,12 @@
     id="{{ uuid }}-triple-element-text"
     class="triple-element-highlight triple-element-text triple-element-text-{{ part }}"
     data-pk="{{ part_id }}"
+    title="{{ part_id }}"
 >{{ part_text }}</span>
 <span id="{{ uuid }}-buttons" class="triple-sense-buttons">
     {% if not is_triple %}<button
-        class="btn btn-primary btn-xs edit-button">edit</button>&nbsp;{% endif %}<button
+        class="btn btn-primary btn-xs edit-button">edit</button>&nbsp;{% if is_predicate %}<button
+        class="btn btn-primary btn-xs predicate-logic-button">predicate logic</button>&nbsp;{% endif %}{% endif %}<button
         class="btn btn-primary btn-xs switch-button">switch</button>&nbsp;<button
         class="btn btn-default btn-xs cancel-button">cancel</button>
 </span>
@@ -21,7 +23,7 @@
     data-type="text"
     data-pk="{{ part_id }}"
     data-name="{{ part }}"
-    data-url="{% url 'edit_rationale_triple' rationale.id 'triple' triple.id part 'edit' %}"
+    data-url="{% url 'edit_rationale_triple' rationale.id triple.id part %}"
     data-original-title="Enter text">{{ part_raw_text }}</a>
 <a
     href="#"
@@ -33,14 +35,17 @@
     data-type="text"
     data-pk="{{ part_id }}"
     data-name="{{ part }}"
-    data-url="{% url 'switch_rationale_triple' rationale.id 'triple' triple.id part 'switch' %}"
+    data-url="{% url 'switch_rationale_triple' rationale.id triple.id part %}"
     data-original-title="Enter text">{{ part_raw_text }}</a>
 <script type="text/javascript">
     (function($){
         $(document).ready(function(){
-        	
+            
             $('#{{ uuid }}-{{ part }}-edit').editable({
-                params: {csrfmiddlewaretoken: '{{ csrf_token }}'},
+                params: {
+                    //csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                mode: 'inline',
                 success: function(response, newValue){
                     // Update all visible instances of sense.
                     //$('#{{ uuid }}-triple-element-text').html(newValue);
@@ -60,24 +65,81 @@
             });
             
             $('#{{ uuid }}-{{ part }}-switch').editable({
-                params: {csrfmiddlewaretoken: '{{ csrf_token }}'},
+                params: {
+                    //csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                onblur:'ignore',// otherwise we can't click on the autocomplete dropdown
+                mode: 'inline',
                 success: function(response, newValue){
-                    //console.log('newvalue1:'+newValue);
+                    console.log('editable.success.newvalue1:'+newValue);
                 }
             }).on('hidden', function(e, reason){
+                console.log('hidden.reason:'+reason)
                 $('#{{ uuid }}-triple-element-text').show();
                 $('#{{ uuid }}-{{ part }}-edit').hide();
                 $('#{{ uuid }}-{{ part }}-switch').hide();
                 $('#{{ uuid }}-buttons').hide();
+            }).on('shown', function(e, editable){
+                editable.input.$input.autocomplete({
+                    //source: $('#{{ uuid }}-{{ part }}-switch').attr('data-url'),
+                    source: "{% url 'search_rationale' rationale.id %}",
+                    minLength: 2,
+                    focus: function(event, ui){
+                        console.log('switch.focus:'+ui.item.label+','+ui.item.value)
+                        var el = $(this);
+                        el.val(ui.item.label);
+                        el.attr('real-value', ui.item.value);
+                        el.data('pk', ui.item.value);
+                        $('#{{ uuid }}-triple-element-text').data('pk', ui.item.value);
+                        $('#{{ uuid }}-triple-element-text').attr('data-pk', ui.item.value);
+                        $('#{{ uuid }}-{{ part }}-switch').editable('option', 'pk', ui.item.value);
+                        return false;
+                    },
+                    change: function(event, ui){
+                        console.log('switch.change')
+                        var el = $(this);
+                        if(ui && ui.item){
+                            el.val(ui.item.label);
+                            el.attr('real-value', ui.item.value);
+                            el.data('pk', ui.item.value);
+                            //console.log('change.to:'+ui.item.value)
+                            $('#{{ uuid }}-triple-element-text').data('pk', ui.item.value);
+                            $('#{{ uuid }}-triple-element-text').attr('data-pk', ui.item.value);
+                            $('#{{ uuid }}-triple-element-text').html(ui.item.label);
+                            //console.log('now.at:'+$('#{{ uuid }}-triple-element-text').data('pk'))
+                            $('#{{ uuid }}-{{ part }}-switch').editable('option', 'pk', ui.item.value);
+                        }else{
+                            el.attr('real-value', '');
+                            el.data('pk', '');
+                            //$('#{{ uuid }}-{{ part }}-switch')
+                            el.editable('option', 'pk', '');
+                        }
+                        return false;
+                    },
+                    select: function(event, ui){
+                        console.log('switch.select:'+ui.item.label)
+                        var el = $(this);
+                        el.val(ui.item.label);
+                        el.attr('real-value', ui.item.value);
+                        el.data('pk', ui.item.value);
+                        $('#{{ uuid }}-triple-element-text').data('pk', ui.item.value);
+                        $('#{{ uuid }}-triple-element-text').attr('data-pk', ui.item.value);
+                        console.log($('#{{ uuid }}-triple-element-text'))
+                        $('#{{ uuid }}-triple-element-text').html(ui.item.label);
+                        $('#{{ uuid }}-{{ part }}-switch').editable('option', 'pk', ui.item.value);
+                        return false;
+                    }
+                });
             });
             
             $('#{{ uuid }}-buttons .edit-button').click(function(){
-            	$('#{{ uuid }}-triple-element-text').hide();
-            	$('#{{ uuid }}-{{ part }}-edit').show().click();
-            	$('#{{ uuid }}-{{ part }}-switch').hide();
-            	$('#{{ uuid }}-buttons').hide();
+                $('#{{ uuid }}-triple-element-text').hide();
+                $('#{{ uuid }}-{{ part }}-edit').show().click();
+                $('#{{ uuid }}-{{ part }}-switch').hide();
+                $('#{{ uuid }}-buttons').hide();
                 return false;
             });
+            
             $('#{{ uuid }}-buttons .switch-button').click(function(){
                 $('#{{ uuid }}-triple-element-text').hide();
                 $('#{{ uuid }}-{{ part }}-edit').hide();
@@ -85,22 +147,24 @@
                 $('#{{ uuid }}-buttons').hide();
                 return false;
             });
+            
             $('#{{ uuid }}-buttons .cancel-button').click(function(){
                 var el = $(this);
                 el.parent().fadeOut('fast');
                 return false;
             });
+            
             $('#{{ uuid }}-triple-element-text')
-	            .bind('mouseover', function(){
-	                var el = $(this);
-	                $('.triple-element-text[data-pk="{{ part_id }}"]').addClass('sense-highlight');
-	                return false;
-	            })
-	            .bind('mouseout', function(){
-	                var el = $(this);
-	                $('.triple-element-text[data-pk="{{ part_id }}"]').removeClass('sense-highlight');
-	                return false;
-	            });
+                .bind('mouseover', function(){
+                    var el = $(this);
+                    $('.triple-element-text[data-pk="{{ part_id }}"]').addClass('sense-highlight');
+                    return false;
+                })
+                .bind('mouseout', function(){
+                    var el = $(this);
+                    $('.triple-element-text[data-pk="{{ part_id }}"]').removeClass('sense-highlight');
+                    return false;
+                });
             $('#{{ uuid }}-triple-element-text').click(function(){
                 var el = $(this);
                 var buttons = el.nextAll('.triple-sense-buttons').first();

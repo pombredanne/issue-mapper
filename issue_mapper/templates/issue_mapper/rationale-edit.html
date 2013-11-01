@@ -3,98 +3,173 @@
 {% block container-classes %}container-full{% endblock %}
 {% block body %}
     <fieldset>
-        <form method="post" class="rationale-editor">
-	        <legend style="margin-bottom:0;">
-	            {% if allow_editing %}
-	            <a
-	                href="#"
-	                id="context_name"
-	                alt="Click to edit"
-	                title="Click to edit"
-	                class="in-line-editable"
-	                data-type="text"
-	                data-pk="{{ rationale.id }}"
-	                data-name="name"
-	                data-url="{% url 'rationale_edit' rationale.id %}"
-	                data-original-title="Enter name">{{ rationale.name }}</a>
-	            {% else %}
-	                {{ rationale.name }}
-	            {% endif %}
-	            {#<span class="label label-info label-xs">{{ rationale.accessibility }}</span>#}
-	            <div class="btn-group btn-group-xs accessibility-buttons">
-				    <button
-				        type="button"
-				        class="btn btn-default {% if rationale.accessibility == 'public' %}btn-selected{% endif %}"
-				        data-name="accessibility"
-				        data-url="{% url 'rationale_edit' rationale.id %}"
-				        data-value="public">public</button>
-				    <button
-				        type="button"
-				        class="btn btn-default {% if rationale.accessibility == 'private' %}btn-selected{% endif %}"
-				        data-name="accessibility"
-				        data-url="{% url 'rationale_edit' rationale.id %}"
-				        data-value="private">private</button>
-				</div>
-	        </legend>
-	        <div class="muted">
-	            managed by {{ rationale.owner.username }}
-	        </div>
-            <div>
-            <ul id="top-sense-editor" class="list-group" style="margin-top:15px;">{% rationale_triple_list rationale triples %}</ul>
-            {%comment%}
-            <ul class="list-group" style="margin-top:15px;">
-			    <li class="list-group-item">allowing patenting of dna, causes, creation of patented GM crops</li>
-			    <li class="list-group-item muted">new</li>
-			</ul>
-			{%endcomment%}
+        {#<form method="post" class="rationale-editor">#}
+            <legend style="margin-bottom:0;">
+                {% if allow_editing %}
+                <a
+                    href="#"
+                    id="context_name"
+                    alt="Click to edit"
+                    title="Click to edit"
+                    class="in-line-editable"
+                    data-type="text"
+                    data-pk="{{ rationale.id }}"
+                    data-name="name"
+                    data-url="{% url 'rationale_edit' rationale.id %}"
+                    data-original-title="Enter name">{{ rationale.name }}</a>
+                {% else %}
+                    {{ rationale.name }}
+                {% endif %}
+                {#<span class="label label-info label-xs">{{ rationale.accessibility }}</span>#}
+                <div class="btn-group btn-group-xs accessibility-buttons">
+                    <button
+                        type="button"
+                        class="btn btn-default {% if rationale.accessibility == 'public' %}btn-selected{% endif %}"
+                        data-name="accessibility"
+                        data-url="{% url 'rationale_edit' rationale.id %}"
+                        data-value="public">public</button>
+                    <button
+                        type="button"
+                        class="btn btn-default {% if rationale.accessibility == 'private' %}btn-selected{% endif %}"
+                        data-name="accessibility"
+                        data-url="{% url 'rationale_edit' rationale.id %}"
+                        data-value="private">private</button>
+                </div>
+            </legend>
+            <div class="muted">
+                managed by {{ rationale.owner.username }}
             </div>
-        </form>
+            
+            <br/>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a
+                        href="#"
+                        class="panel-open-close-button unselectable icon-chevron-down"
+                        open-icon="icon-chevron-down"
+                        close-icon="icon-chevron-up">&nbsp;Settings</a></div>
+                <div class="panel-body" style="display:none;">
+                    <div id="settings-form" role="form">
+                        <div class="form-group">
+                            <label for="rules">Rules</label>
+                            <input class="" style="min-width:300px;" type="hidden" name="rules" id="rules" value="{{ rationale.rule_ids_str }}" />
+                        </div>
+                        <button
+                            type="submit"
+                            data-loading-text="Saving..."
+                            class="btn btn-primary settings-save-button">Save</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <ul id="top-sense-editor" class="list-group" style="margin-top:15px;">{% rationale_triple_list rationale triples %}</ul>
+                {%comment%}
+                <ul class="list-group" style="margin-top:15px;">
+                    <li class="list-group-item">allowing patenting of dna, causes, creation of patented GM crops</li>
+                    <li class="list-group-item muted">new</li>
+                </ul>
+                {%endcomment%}
+            </div>
+        {#</form>#}
     </fieldset>
 {% endblock %}
 {% block body-js %}
-	<script type="text/javascript">
-		(function($){
-			$(document).ready(function(){
-				$.fn.editable.defaults.mode = 'inline';
-				$('#top-sense-editor').sensetree({
-					context_id: {{ rationale.id }},
-					{#triple_id_list: [{% for triple in triples %}{% if not forloop.first %},{% endif %}{{ triple.id }}{% endfor %}],#}
-					get_triple_url: "{% url 'get_rationale_triple' rationale.id 'triple' 'get' %}",
-					create_triple_url: "{% url 'create_rationale_triple' rationale.id 'triple' 'create' %}",
-					search_triple_url: "{% url 'search_rationale_triple' rationale.id 'triple' 'search' %}",
-					search_sense_url: "{% url 'search_rationale_sense' rationale.id 'sense' 'search' %}",
-					search_all_url: "{% url 'search_rationale' rationale.id %}",
-					default_ul_classes: "list-group",
-					default_li_classes: "list-group-item",
-					allow_editing: {{ allow_editing|jsonify }},
-					extra:{
+    <script type="text/javascript">
+        (function($){
+            $(document).ready(function(){
+                
+                $('.btn').button();
+
+                $('#settings-form .settings-save-button').click(function(){
+                    var el = $(this);
+                    el.button('loading');
+                    $.ajax({
+                        url: "{% url 'save_rationale_settings' rationale.id %}",
+                        data:{
+                            rules:$('#settings-form #rules').val()
+                        },
+                        dataType:'html',
+                        success:function(){
+                            //el.button('complete');
+                            el.html('Saved!');
+                            setTimeout(function(){ el.button('reset'); }, 3000);
+                        }
+                    });
+                    return false;
+                });
+                
+                $('#rules').select2({
+                    initSelection : function(element, callback){
+                        var data = [{% for rule in rationale.rules.all %}{% if not forloop.first %},{% endif %}{id:{{ rule.id }}, label:'{{ rule.name }}'}{% endfor %}]
+                        callback(data);
+                    },
+                    placeholder: 'search for a rule',
+                    multiple: true,
+                    minimumInputLength: 3,
+                    ajax:{
+                        url: "{% url 'search_rationale_rules' rationale.id %}",
+                        dataType:'json',
+                        data: function(term, page){
+                            return {
+                                q: term,
+                            };
+                           },
+                           quietMillis: 250,
+                        results: function(data, page){
+                            return {results:data, more:false};
+                        }
+                    },
+                    escapeMarkup: function (m) { return m; },
+                    dropdownCssClass: "bigdrop",
+                    formatResult: function(object, container, query){
+                        return '<div>'+object.label+'</div>';
+                    },
+                    formatSelection: function(object){
+                        return object.label;
+                    }
+                });
+                
+                $('#top-sense-editor').sensetree({
+                    context_id: {{ rationale.id }},
+                    {#triple_id_list: [{% for triple in triples %}{% if not forloop.first %},{% endif %}{{ triple.id }}{% endfor %}],#}
+                    get_triple_url: "{% url 'get_rationale_triple' rationale.id %}",
+                    create_triple_url: "{% url 'create_rationale_triple' rationale.id %}",
+                    search_triple_url: "{% url 'search_rationale_triple' rationale.id %}",
+                    search_sense_url: "{% url 'search_rationale_sense' rationale.id %}",
+                    search_all_url: "{% url 'search_rationale' rationale.id %}",
+                    default_ul_classes: "list-group",
+                    default_li_classes: "list-group-item",
+                    allow_editing: {{ allow_editing|jsonify }},
+                    extra:{
                         csrfmiddlewaretoken: '{{ csrf_token }}',
-					}
-				});
-			    {% if allow_editing %}
-			        $('#context_name').editable({
-			        	params: {csrfmiddlewaretoken: '{{ csrf_token }}'}
-			        });
-			        $('.accessibility-buttons button').click(function(){
-			        	var el = $(this);
-			        	var parent = el.parent();
-			        	$.ajax({
-			        		url: el.data('url'),
-			        		method:'post',
-			        		dataType: 'html',
-			        		data:{
-			        			csrfmiddlewaretoken: '{{ csrf_token }}',
-			        			name: el.data('name'),
-			        			value: el.data('value')
-			        		},
-			        		success:function(){
-			        			$('button', parent).removeClass('btn-selected');
+                    }
+                });
+                {% if allow_editing %}
+                    $('#context_name').editable({
+                        mode: 'inline',
+                        params: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+                    });
+                    $('.accessibility-buttons button').click(function(){
+                        var el = $(this);
+                        var parent = el.parent();
+                        $.ajax({
+                            url: el.data('url'),
+                            method:'post',
+                            dataType: 'html',
+                            data:{
+                                csrfmiddlewaretoken: '{{ csrf_token }}',
+                                name: el.data('name'),
+                                value: el.data('value')
+                            },
+                            success:function(){
+                                $('button', parent).removeClass('btn-selected');
                                 el.addClass('btn-selected');
-			        		}
-			        	});
-			        });
-			    {% endif %}
-			});
-		})(jQuery);
-	</script>
+                            }
+                        });
+                    });
+                {% endif %}
+            });
+        })(jQuery);
+    </script>
 {% endblock %}

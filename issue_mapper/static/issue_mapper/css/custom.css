@@ -418,9 +418,9 @@ button[value=save]{
 .container .content blockquote{
     font-size:16px;
     background-color: #dedede;
-	color: #333;
-	padding-top: 5px;
-	padding-bottom: 5px;
+    color: #333;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 .container .content blockquote p{
     font-size:16px;
@@ -657,7 +657,8 @@ button[value=save]{
 }
 
 #new-link-section input.error,
-textarea.error{
+textarea.error,
+.inference-source-arguments ul.error{
     border:1px solid red;
 }
 input[type=text].error{
@@ -1483,7 +1484,7 @@ button.full-width-sidebar-btn:hover{
 }
 /* Force footer to bottom of page if not enough content. */
 body.footer-fixed{
-	height:100%;
+    height:100%;
 }
 body.footer-fixed #footer{
     bottom:0;
@@ -1630,6 +1631,67 @@ ul#top-sense-editor .triple-element-text:hover{
 ul#top-sense-editor .sense-highlight{
     color:#428BCA;
 }
+ul#top-sense-editor .predicate-logic-form{
+    margin-top:10px;
+    margin-bottom:5px;
+}
+ul#top-sense-editor .inferences-form{
+    margin-top:10px;
+    margin-bottom:5px;
+    padding-left:0px;
+}
 .triple-sense-buttons{
     display:none;
+}
+.panel-open-close-button{
+    color:#999;
+}
+.panel-open-close-button:hover{
+    color:#333;
+    text-decoration:none;
+}
+.unselectable,
+.unselectable:focus{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    outline: none;
+    text-decoration: none;
+}
+.select2-container-multi .select2-choices{
+    height: 34px;
+    padding-top: 2px;
+    font-size: 14px;
+    line-height: 1.42857;
+    color: rgb(85, 85, 85);
+    vertical-align: middle;
+    background-color: rgb(255, 255, 255);
+    border: 1px solid #ccc;
+    border-radius: 4px 4px 4px 4px;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset;
+    transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
+}
+.inference-source-arguments .select2-choices{
+    width:500px;
+}
+ul#top-sense-editor li.highlight,
+ul#top-sense-editor li.highlight-sticky{
+    background-color:#FFE6B6;
+    color:#333;
+}
+ul#top-sense-editor li.highlight .triple-element-text ,
+ul#top-sense-editor li.highlight-sticky .triple-element-text {
+    color:#333;
+}
+li.triple-inference .confirm-unknown{
+    color:gray;
+}
+li.triple-inference .confirm-yes{
+    color:green;
+}
+li.triple-inference .confirm-no{
+    color:red;
 }

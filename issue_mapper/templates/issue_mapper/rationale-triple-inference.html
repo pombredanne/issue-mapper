@@ -1,0 +1,17 @@
+<li class="list-group-item triple-inference" inference-id="{{ inference.id }}">
+    {% if inference.confirmed == None %}
+        <i class="icon-question-sign confirm-unknown" title="This inference has not been confirmed nor refuted."></i>
+    {% else %}
+        {% if inference.confirmed %}
+            <i class="icon-ok confirm-yes" title="This inference has been confirmed."></i>
+        {% else %}
+            <i class="icon-remove confirm-no" title="This inference has been refuted."></i>
+        {% endif %}
+    {% endif %}&nbsp;<span
+        class="btn btn-default btn-xs">{{ inference.inference_rule }}</span>&nbsp;&plus;&nbsp;{% for argument in inference.inference_arguments.all %}<a
+            class="btn btn-default btn-xs inference-rule-argument-triple"
+            triple-id="{{ argument.id }}"
+            alt="statement {{ argument.id }}"
+            title="statement {{ argument.id }}"
+            href="#triple-{{ argument.id }}">{{ argument.text_sentence }}</a>{% if not forloop.last %}&nbsp;&plus;&nbsp;{% endif %}{% endfor %}
+</li>

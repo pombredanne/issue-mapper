@@ -1,20 +1,215 @@
 {% load issue_mapper %}
 {% for triple in triples %}
     {% setuuid as uuid %}
-    <li id="{{ uuid }}_li" class="list-group-item">
+    <li id="{{ uuid }}_li" class="list-group-item rationale-triple" triple-id="{{ triple.id }}">
+        <a name="triple-{{ triple.id }}"></a>
+        
+        {#[{{triple.id}}]#}
         {% triple_edit_switch rationale triple 'subject' %}
         {% triple_edit_switch rationale triple 'predicate' %}
         {% triple_edit_switch rationale triple 'object' %}
+
         <a
             href="#"
             class="icon-trash"
             alt="Delete"
             title="Delete"
-            ajax-url="{% url 'delete_rationale_triple' rationale.id 'triple' 'delete' %}?id={{ triple.id }}"></a>
-        <span class="delete-confirm">Delete?&nbsp;<button class="btn btn-success btn-xs">Yes</button>&nbsp;<button class="btn btn-danger btn-xs">No</button></span>
+            ajax-url="{% url 'delete_rationale_triple' rationale.id %}?id={{ triple.id }}"></a>
+        <span class="delete-confirm">&nbsp;Delete?&nbsp;<button class="btn btn-success btn-xs">Yes</button>&nbsp;<button class="btn btn-danger btn-xs">No</button></span>
+
+        <a
+            href="#"
+            class="btn btn-default btn-xs show-inferences-button"
+            style="float:right;"
+            alt="show or edit inferences"
+            title="show or edit inferences">{% if triple.inferences.all.count %}<b>{{ triple.inferences.all.count }}</b>{% else %}add{% endif %} inference{% if triple.inferences.all.count != 1 %}s{% endif %}</a>
+        
+        <div
+            class="predicate-logic-form panel panel-default"
+            ajax-url="{% url 'edit_rationale_predicate' rationale.id triple.predicate.id %}"
+            role="form" style="display:none;">
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="exampleInputEmail1">Predicate name</label>
+                    <input
+                        type="text" class="form-control"
+                        placeholder=""
+                        name="internal_predicate"
+                        value="{% if triple.predicate.conceptnet_predicate %}{{ triple.predicate.conceptnet_predicate }}{% endif %}" />
+                </div>
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox" name="transitive" value="1"
+                            {% if triple.predicate.transitive %}checked="checked"{% endif %} /> Transitive
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary predicate-save-button">Save</button>
+                <button class="btn btn-default predicate-cancel-button">Cancel</button>
+            </div>
+        </div>
+
+        <ul class="inferences-form" style="display:none;">
+            <li class="list-group-item muted">
+                <div class="form-inline" role="form">
+                    <div>Specify a rule that, when given the arguments, infers this statement.</div>
+                    <div class="form-group">
+                        <label class="sr-only" for="{{ uuid }}-rule">Rule</label>
+                        <input
+                            class="form-control"
+                            id="{{ uuid }}-rule"
+                            ajax-url="{% url 'search_rationale_rules' rationale.id %}"
+                            name="rule" type="text" placeholder="rule" value="" real-value="" />
+                    </div>
+                    <div class="form-group inference-source-arguments">
+                        <label class="sr-only" for="{{ uuid }}-arguments">Arguments</label>
+                        <input
+                            ajax-url="{% url 'search_rationale_triple' rationale.id %}"
+                            id="{{ uuid }}-arguments" name="arguments" type="hidden" value="" real-value="" />
+                    </div>
+                    <button type="submit" class="btn btn-default btn-primary add-inference-source-button">Add Inference Source</button>
+                </div>
+            </li>
+            {% for inference in triple.inferences.all %}
+                {% include 'issue_mapper/rationale-triple-inference.html' %}
+            {% endfor %}
+        </ul>
+        
         <script type="text/javascript">
             (function($){
                 $(document).ready(function(){
+                    
+                	if($('#{{ uuid }}_li').attr('triple-id') == window.location.hash.slice(8)){
+                		$('#{{ uuid }}_li').addClass('highlight');
+                	}
+                	
+                	$('#{{ uuid }}_li .inference-rule-argument-triple')
+                	    .click(function(){
+                            var el = $(this);
+                            var triple_id = el.attr('triple-id');
+                            $('.rationale-triple').removeClass('highlight-sticky');
+                            $('.rationale-triple[triple-id="'+triple_id+'"]').addClass('highlight-sticky');
+                	    })
+	                	.bind('mouseover', function(){
+	                		var el = $(this);
+	                		var triple_id = el.attr('triple-id');
+	                		$('.rationale-triple[triple-id="'+triple_id+'"]').addClass('highlight');
+	                	})
+                        .bind('mouseout', function(){
+                            var el = $(this);
+                            var triple_id = el.attr('triple-id');
+                            $('.rationale-triple').removeClass('highlight');
+                        });
+                	
+                    $('#{{ uuid }}_li .show-inferences-button').click(function(){
+                        $('#{{ uuid }}_li .inferences-form').slideToggle('fast');
+                        return false;
+                    });
+                    
+                    $('#{{ uuid }}-rule').autocomplete({
+                        source: $('#{{ uuid }}-rule').attr('ajax-url'),
+                        minLength: 2,
+                        focus: function(event, ui){
+                            var el = $(this);
+                            el.val(ui.item.label);
+                            el.attr('real-value', ui.item.value);
+                            return false;
+                        },
+                        change: function(event, ui){
+                            var el = $(this);
+                            if(ui && ui.item){
+                                el.val(ui.item.label);
+                                el.attr('real-value', ui.item.value);
+                            }else{
+                                el.attr('real-value', '');
+                            }
+                        },
+                        select: function(event, ui){
+                            var el = $(this);
+                            el.val(ui.item.label);
+                            el.attr('real-value', ui.item.value);
+                            return false;
+                        }
+                    });
+                    
+                    $('#{{ uuid }}-arguments').select2({
+                        initSelection : function(element, callback){
+                            var data = []
+                            callback(data);
+                        },
+                        placeholder: 'search for a statement',
+                        multiple: true,
+                        minimumInputLength: 3,
+                        ajax:{
+                            url: $('#{{ uuid }}-arguments').attr('ajax-url'),
+                            //method:'get',
+                            dataType:'json',
+                            data: function(term, page){
+                                return {
+                                    q: term,
+                                    _: Math.random()
+                                };
+                               },
+                               quietMillis: 250,
+                            results: function(data, page){
+                                return {results:data, more:false};
+                            }
+                        },
+                        escapeMarkup: function (m) { return m; },
+                        dropdownCssClass: "bigdrop",
+                        formatResult: function(object, container, query){
+                            return '<div>'+object.label+'</div>';
+                        },
+                        formatSelection: function(object){
+                            return object.label;
+                        }
+                    });
+
+                    $('#{{ uuid }}_li .inferences-form .add-inference-source-button').click(function(){
+                    	var el = $(this);
+                    	el.button('loading...');
+                    	var form = $('#{{ uuid }}_li .inferences-form');
+                        var rule = $('[name=rule]', form);
+                        var arguments = $('[name=arguments]', form);
+                        
+                        valid = true;
+                        var rule_text = $.trim(rule.attr('real-value')) || $.trim(rule.val());
+                        if(!rule_text.length){
+                            rule.addClass('error');
+                            valid = false;
+                        }else{
+                            rule.removeClass('error');
+                        }
+                        var arguments_text = $.trim(arguments.attr('real-value')) || $.trim(arguments.val());
+                        if(!arguments_text.length){
+                        	$('.select2-choices', arguments.parent()).addClass('error');
+                            valid = false;
+                        }else{
+                        	$('.select2-choices', arguments.parent()).removeClass('error');
+                        }
+                        
+                        if(!valid){
+                            return false;
+                        }
+                        
+                        $.ajax({
+                        	url:"{% url 'create_rationale_inference' rationale.id %}",
+                        	method:'get',
+                        	dataType:'html',
+                        	data:{
+                        		rule_id:rule_text,
+                        		argument_ids:arguments_text,
+                        		triple_id:{{ triple.id }}
+                        	},
+                        	success:function(data){
+                        		el.button('reset');
+                        		console.log(data)
+                        	}
+                        });
+                        
+                        return false;
+                    });
+                    
                     $('#{{ uuid }}_li .delete-confirm .btn-success').click(function(){
                         var el = $('#{{ uuid }}_li .icon-trash');
                         $.ajax({
@@ -25,11 +220,52 @@
                                 csrfmiddlewaretoken: '{{ csrf_token }}'
                             },
                             success:function(){
-                                el.parent().remove();
+                                el.parent().fadeOut('slow', function(){
+                                    var el = $(this);
+                                    el.remove();
+                                });
                             }
                         });
                         return false;
                     });
+                    
+                    $('#{{ uuid }}_li .predicate-logic-button').click(function(){
+                        var el = $(this);
+                        var form = $('#{{ uuid }}_li .predicate-logic-form');
+                        form.fadeToggle('fast');
+                        return false;
+                    });
+
+                    $('#{{ uuid }}_li .cancel-button').click(function(){
+                        var el = $(this);
+                        var form = $('#{{ uuid }}_li .predicate-logic-form');
+                        form.fadeOut('fast');
+                        return false;
+                    });
+                    
+                    $('#{{ uuid }}_li .predicate-save-button').click(function(){
+                        var el = $(this);
+                        $.ajax({
+                            url:$('#{{ uuid }}_li .predicate-logic-form').attr('ajax-url'),
+                            method:'post',
+                            data:{
+                                csrfmiddlewaretoken: '{{ csrf_token }}',
+                                internal_predicate: $('#{{ uuid }}_li .predicate-logic-form [name=internal_predicate]').val(),
+                                transitive: $('#{{ uuid }}_li .predicate-logic-form [name=transitive]').is(':checked')
+                            },
+                            success:function(){
+                                $('#{{ uuid }}_li .predicate-logic-form').fadeOut('fast');
+                            }
+                        });
+                        return false;
+                    });
+                    
+                    $('#{{ uuid }}_li .predicate-cancel-button').click(function(){
+                        var el = $(this);
+                        $('#{{ uuid }}_li .predicate-logic-form').fadeOut('fast');
+                        return false;
+                    });
+                    
                     $('#{{ uuid }}_li .delete-confirm .btn-danger').click(function(){
                         var el = $(this);
                         el.parent().fadeOut('fast');

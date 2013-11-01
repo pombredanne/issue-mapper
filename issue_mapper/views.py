@@ -2806,6 +2806,7 @@ class RationaleEditView(BaseTemplateView):
         return self.get(self, *args, **kwargs)
     
     def get(self, *args, **kwargs):
+        import utils
         if 'rationale_id' not in self.kwargs:
             q = sm.Context.objects.filter(owner=self.request.user)
             context, _ = sm.Context.objects.get_or_create(
@@ -2820,6 +2821,8 @@ class RationaleEditView(BaseTemplateView):
                 return sm.Sense.objects.get(id=id)
             elif text.startswith('triple:'):
                 return sm.Triple.objects.get(id=text.split(':')[-1])
+            elif text.startswith('sense:'):
+                return sm.Sense.objects.get(id=text.split(':')[-1])
             else:
                 word, _ = sm.Word.objects.get_or_create(text=text.strip())
                 sense, _ = sm.Sense.objects.get_or_create(word=word, defaults=dict(definition=text))
@@ -2854,21 +2857,98 @@ class RationaleEditView(BaseTemplateView):
         # Process AJAX post request.
         action = self.kwargs.get('action')
         subtype = self.kwargs.get('subtype')
+        print '!'*80
         print 'action:',action,'subtype:',subtype
-        if action == 'search':
-            q = self.request.GET.get('term', '').strip()
-            if not q:
-                raise Http404
-            triples = sm.Triple.search_objects.search(q).filter(deleted__isnull=True)[:5]
-            #TODO:block caching?
-            return HttpResponse(
-                content=json.dumps([
-                    dict(label=triple.text(), value='triple:%i' % triple.id)
-                    for triple in triples
-                ]),
-                content_type='application/json')
-        elif rationale.allow_editing(self.request.user):
+        if action == 'save':
+            if subtype == 'settings':
+                new_rules = set(map(
+                    lambda id: sm.InferenceRule.objects.get(id=id),
+                    [_.strip() for _ in self.request.GET.get('rules', '').split(',') if _.strip()]
+                ))
+                old_rules = set(rationale.rules.all())
+                added_rules = new_rules.difference(old_rules)
+                removed_rules = old_rules.difference(new_rules)
+                rationale.rules.add(*added_rules)
+                rationale.rules.remove(*removed_rules)
+                return HttpResponse(content='1', content_type='text/html')
+        elif action == 'search':
             if subtype == 'triple':
+                q = self.request.GET.get('q', self.request.GET.get('term', '')).strip()
+                if not q:
+                    raise Http404
+                triples = sm.Triple.search_objects.search(q)\
+                    .filter(deleted__isnull=True, all_triples_contexts__id=rationale.id)[:5]
+                #TODO:block caching?
+                return HttpResponse(
+                    content=json.dumps([
+                        dict(label=triple.text(), value='triple:%i' % triple.id, id=triple.id)
+                        for triple in triples
+                    ]),
+                    content_type='application/json')
+            elif subtype == 'sense':
+                q = self.request.GET.get('q', self.request.GET.get('term', '')).strip()
+                if not q:
+                    raise Http404
+                senses = sm.Sense.search_objects.search(q)\
+                    .filter(
+                        deleted__isnull=True,
+                        all_senses_contexts__id=rationale.id
+                    )[:5]
+                if not senses.count():
+                    senses = sm.Sense.objects.filter(
+                        _text__icontains=q,
+                        deleted__isnull=True,
+                        all_senses_contexts__id=rationale.id
+                    )[:5]
+                #TODO:block caching?
+                return HttpResponse(
+                    content=json.dumps([
+                        dict(label=sense.word.text, value='sense:%i' % sense.id, id=sense.id)
+                        for sense in senses
+                    ]),
+                    content_type='application/json')
+            elif subtype == 'triple_sense':
+                q = self.request.GET.get('term', '').strip()
+                if not q:
+                    raise Http404
+                triples = sm.Triple.search_objects.search(q)\
+                    .filter(deleted__isnull=True, all_triples_contexts__id=rationale.id)[:5]
+                senses = sm.Sense.search_objects.search(q)\
+                    .filter(deleted__isnull=True, all_senses_contexts__id=rationale.id)[:5]
+                #TODO:block caching?
+                return HttpResponse(
+                    content=json.dumps([
+                        dict(label=sense.word.text, value='sense:%i' % sense.id)
+                        for sense in senses
+                    ]+[
+                        dict(label=triple.text(), value='triple:%i' % triple.id)
+                        for triple in triples
+                    ]),
+                    content_type='application/json')
+            elif subtype == 'rules':
+                q = self.request.GET.get('q', self.request.GET.get('term', '')).strip()
+                if not q:
+                    raise Http404
+                rules = sm.InferenceRule.search_objects.search(q).filter(deleted__isnull=True)[:5]
+                if not rules.count():
+                    rules = sm.InferenceRule.objects.filter(Q(name__icontains=q)).filter(deleted__isnull=True)[:5]
+                #TODO:block caching?
+                return HttpResponse(
+                    content=json.dumps([
+                        dict(label=rule.name, value=rule.id, id=rule.id) # select2.js requires an id field
+                        for rule in rules
+                    ]),
+                    content_type='application/json')
+        elif rationale.allow_editing(self.request.user):
+            if subtype == 'inference':
+                if action == 'create':
+                    triple = sm.Triple.objects.get(id=self.request.REQUEST.get('triple_id', ''))
+                    rule = sm.InferenceRule.objects.get(id=self.request.REQUEST.get('rule_id', ''))
+                    arguments = [sm.Triple.objects.get(id=_) for _ in self.request.REQUEST.get('argument_ids', '').split(',') if _.strip()]
+                    print 'arguments0:',arguments
+                    ti, _ = sm.TripleInference.get_or_create(rule=rule, arguments=arguments, triple=triple)
+                    return HttpResponse(content='1', content_type='text/html')
+            elif subtype == 'triple':
                 if action == 'get':
                     print 'triples:',self.request.REQUEST.keys()
                     triples = [int(_) for _ in self.request.REQUEST.get('ids','').split(',') if _.strip()]
@@ -2881,6 +2961,13 @@ class RationaleEditView(BaseTemplateView):
                             triples=triples,
                         ),
                         context_instance=RequestContext(self.request))
+                elif action == 'edit_predicate':
+                    print 'action:',action
+                    predicate = sm.Sense.objects.get(id=self.kwargs['sense_id'], all_senses_contexts__id=rationale.id)
+                    predicate.conceptnet_predicate = self.request.REQUEST['internal_predicate']
+                    predicate.transitive = {'true':1,'false':0}[self.request.REQUEST['transitive']]
+                    predicate.save()
+                    return HttpResponse(content='1', content_type='text/html')
                 elif action == 'edit':
                     # Change the text of a sense.
                     name = self.request.REQUEST.get('name')
@@ -2894,6 +2981,10 @@ class RationaleEditView(BaseTemplateView):
                         word, _ = sm.Word.objects.get_or_create(text=value.strip())
                         sense.word = word
                         sense.save()
+                        # Clear cached text in all triples that reference this sense.
+                        sm.Triple.objects.filter(all_triples_contexts__id=rationale.id, subject=sense).update(_text=None)
+                        sm.Triple.objects.filter(all_triples_contexts__id=rationale.id, predicate=sense).update(_text=None)
+                        sm.Triple.objects.filter(all_triples_contexts__id=rationale.id, object=sense).update(_text=None)
                     elif model_type == 'triple':
                         triple = get_object_or_404(sm.Triple, id=pk, all_triples_contexts__id=rationale.id)
                         todo
@@ -2907,17 +2998,24 @@ class RationaleEditView(BaseTemplateView):
                     pk = self.request.REQUEST.get('pk')
                     model_type, model_id = pk.split(':')
                     value = self.request.REQUEST.get('value')
-                    part = self.request.REQUEST.get('part')
-                    triple_id = self.request.REQUEST.get('triple_id')
+                    part = self.kwargs.get('part')
+                    triple_id = self.kwargs.get('triple_id')
+                    triple = get_object_or_404(sm.Triple, id=triple_id, all_triples_contexts__id=rationale.id)
                     if model_type == 'sense':
-                        todo
-                        #sense = get_object_or_404(sm.Sense, id=model_id, all_senses_contexts__id=rationale.id)
-                        word, _ = sm.Word.objects.get_or_create(text=value.strip())
-                        sense.word = word
-                        sense.save()
+                        print 'switching sense on triple',triple.id,part,pk
+                        assert part in ('subject', 'predicate', 'object'), 'Invalid part: %s' % (part,)
+                        sense = get_object_or_404(sm.Sense, id=model_id, all_senses_contexts__id=rationale.id)
+                        setattr(triple, part, sense)
+                        if part in ('subject', 'object'):
+                            setattr(triple, part+'_triple', None)
+                        triple.save()
                     elif model_type == 'triple':
-                        triple = get_object_or_404(sm.Triple, id=pk, all_triples_contexts__id=rationale.id)
-                        todo
+                        print 'switching sub-triple on triple',triple.id,part,pk
+                        assert part in ('subject', 'object'), 'Invalid part: %s' % (part,)
+                        sub_triple = get_object_or_404(sm.Triple, id=model_id, all_triples_contexts__id=rationale.id)
+                        setattr(triple, part+'_triple', sub_triple)
+                        setattr(triple, part, None)
+                        triple.save()
                     else:
                         raise Http404
                     print 'set name:',name,'pk:',pk,'value:',value
@@ -2929,10 +3027,10 @@ class RationaleEditView(BaseTemplateView):
                     return HttpResponse(content='1', content_type='text/html')
                 elif action == 'create':
                     print 'create'
-                    subject = get_or_create_sense(self.request.REQUEST.get('subject_id'), self.request.REQUEST.get('subject_text'))
-                    predicate = get_or_create_sense(self.request.REQUEST.get('predicate_id'), self.request.REQUEST.get('predicate_text'))
-                    object = get_or_create_sense(self.request.REQUEST.get('object_id'), self.request.REQUEST.get('object_text'))
-                    triple = get_or_create_triple(subject=subject, predicate=predicate, object=object)
+                    subject = get_or_create_sense(self.request, self.request.REQUEST.get('subject_id'), self.request.REQUEST.get('subject_text'))
+                    predicate = get_or_create_sense(self.request, self.request.REQUEST.get('predicate_id'), self.request.REQUEST.get('predicate_text'))
+                    object = get_or_create_sense(self.request, self.request.REQUEST.get('object_id'), self.request.REQUEST.get('object_text'))
+                    triple = get_or_create_triple(self.request, subject=subject, predicate=predicate, object=object)
                     triple.deleted = None
                     triple.save()
                     triple_vote, _ = models.TripleVote.objects.get_or_create(triple=triple, person=self.request.user.person, weight=sm.c.YES)

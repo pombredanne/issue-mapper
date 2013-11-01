@@ -105,6 +105,32 @@ myplugin.publicMethod(); // prints "publicMethod() called!" to console
                     return false;
                 }
             });
+            
+            $("[name=predicate]", element).autocomplete({
+                source: settings.search_sense_url,
+                minLength: 2,
+                focus: function(event, ui){
+                    var el = $(this);
+                    el.val(ui.item.label);
+                    el.attr('real-value', ui.item.value);
+                    return false;
+                },
+                change: function(event, ui){
+                    var el = $(this);
+                    if(ui && ui.item){
+                        el.val(ui.item.label);
+                        el.attr('real-value', ui.item.value);
+                    }else{
+                        el.attr('real-value', '');
+                    }
+                },
+                select: function(event, ui){
+                    var el = $(this);
+                    el.val(ui.item.label);
+                    el.attr('real-value', ui.item.value);
+                    return false;
+                }
+            });
 
             $("[name=object]", element).autocomplete({
                 source: settings.search_all_url,
@@ -153,6 +179,7 @@ myplugin.publicMethod(); // prints "publicMethod() called!" to console
         
         $('.new-triple-form', element).submit(function(){
             var form = $(this);
+            $('[type=submit].save-button', element).button('loading...');
             var subject = $('[name=subject]', form);
             var predicate = $('[name=predicate]', form);
             var object = $('[name=object]', form);
@@ -208,6 +235,7 @@ myplugin.publicMethod(); // prints "publicMethod() called!" to console
                     }else{
                         element.append(content);
                     }
+                    $('[type=submit].save-button', element).button('reset');
                 }
             });
             return false;
