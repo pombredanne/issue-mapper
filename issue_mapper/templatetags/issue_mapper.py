@@ -572,3 +572,14 @@ def setuuid(parser, token):
 #    if not (new_val[0] == new_val[-1] and new_val[0] in ('"', "'")):
 #        raise template.TemplateSyntaxError, "%r tag's argument should be in quotes" % tag_name
     return SetVarNode(var_name)
+
+@register.simple_tag
+def triple_star(rationale, triple):
+    request = get_current_request()
+    return loader.render_to_string('issue_mapper/triple-star.html', dict(
+        has_top_flow=triple.has_top_flow(rationale),
+        top_flow=triple.get_top_flow(rationale),
+        triple=triple,
+        rationale=rationale,
+        uuid='_'+str(uuid.uuid4()).replace('-', ''),
+    ), context_instance=RequestContext(request))

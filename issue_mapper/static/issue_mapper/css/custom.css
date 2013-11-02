@@ -1695,3 +1695,14 @@ li.triple-inference .confirm-yes{
 li.triple-inference .confirm-no{
     color:red;
 }
+a.goal-star,
+a.goal-star:hover{
+	text-decoration:none;
+}
+a.icon-star-empty{
+	color:gray;
+}
+a.icon-star,
+a.icon-star-empty:hover{
+	color: rgb(0, 136, 204);
+}

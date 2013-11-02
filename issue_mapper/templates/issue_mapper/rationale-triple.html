@@ -4,7 +4,8 @@
     <li id="{{ uuid }}_li" class="list-group-item rationale-triple" triple-id="{{ triple.id }}">
         <a name="triple-{{ triple.id }}"></a>
         
-        {#[{{triple.id}}]#}
+        {% triple_star rationale triple %}
+        
         {% triple_edit_switch rationale triple 'subject' %}
         {% triple_edit_switch rationale triple 'predicate' %}
         {% triple_edit_switch rationale triple 'object' %}

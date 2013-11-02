@@ -1,0 +1,35 @@
+<span id="{{ uuid }}" class="goal-link-container">
+    <a
+        href="#"
+        flow-index="0"
+        {% if has_top_flow %}
+            title="Marked as goal." class="goal-star icon-star"
+        {% else %}
+            title="Mark as goal." class="goal-star icon-star-empty"
+        {% endif %}></a>
+    <script type="text/javascript">
+        (function($){
+            $(document).ready(function(){
+                $('#{{ uuid }} .goal-star').click(function(){
+                    var el = $(this);
+                    $.ajax({
+                        url:'{% url "set_rationale_goal" rationale.id triple.id %}',
+                        method:'post',
+                        data:{},
+                        dataType:'html',
+                        success:function(html){
+                            $('.goal-link-container a[flow-index=0]')
+                                .attr('flow-index', '')
+                                .attr('title', 'Mark as goal.')
+                                .removeClass('icon-star')
+                                .addClass('icon-star-empty');
+                            var content = $('<div/>').html(html).contents();
+                            el.replaceWith(content);
+                        }
+                    });
+                    return false;
+                });
+            });
+        })(jQuery);
+    </script>
+</span>

@@ -2825,7 +2825,7 @@ class RationaleEditView(BaseTemplateView):
                 return sm.Sense.objects.get(id=text.split(':')[-1])
             else:
                 word, _ = sm.Word.objects.get_or_create(text=text.strip())
-                sense, _ = sm.Sense.objects.get_or_create(word=word, defaults=dict(definition=text))
+                sense, _ = sm.Sense.objects.get_or_create(word=word, owner=rationale.owner, defaults=dict(definition=text))
                 return sense
         
         def get_or_create_triple(subject, predicate, object):
@@ -2851,7 +2851,8 @@ class RationaleEditView(BaseTemplateView):
                 subject_triple=subject_triple,
                 predicate=predicate,
                 object=object,
-                object_triple=object_triple)
+                object_triple=object_triple,
+                owner=rationale.owner)
             return triple
         
         # Process AJAX post request.
@@ -2871,6 +2872,24 @@ class RationaleEditView(BaseTemplateView):
                 rationale.rules.add(*added_rules)
                 rationale.rules.remove(*removed_rules)
                 return HttpResponse(content='1', content_type='text/html')
+        elif action == 'goal':
+            if subtype == 'triple':
+                triple = sm.Triple.objects.get(
+                    id=self.kwargs['triple_id'],
+                    deleted__isnull=True,
+                    all_triples_contexts__id=rationale.id)
+                sm.TripleFlow.objects\
+                    .filter(context=rationale, index=0, parent__isnull=True)\
+                    .exclude(triple=triple)\
+                    .update(deleted=timezone.now(), index=None)
+                flow, _ = sm.TripleFlow.objects.get_or_create(context=rationale, triple=triple)
+                flow.index = 0
+                flow.deleted = None
+                flow.save()
+                from issue_mapper.templatetags.issue_mapper import triple_star
+                return HttpResponse(
+                    content=triple_star(rationale=rationale, triple=triple),
+                    content_type='text/html')
         elif action == 'search':
             if subtype == 'triple':
                 q = self.request.GET.get('q', self.request.GET.get('term', '')).strip()
@@ -3027,10 +3046,10 @@ class RationaleEditView(BaseTemplateView):
                     return HttpResponse(content='1', content_type='text/html')
                 elif action == 'create':
                     print 'create'
-                    subject = get_or_create_sense(self.request, self.request.REQUEST.get('subject_id'), self.request.REQUEST.get('subject_text'))
-                    predicate = get_or_create_sense(self.request, self.request.REQUEST.get('predicate_id'), self.request.REQUEST.get('predicate_text'))
-                    object = get_or_create_sense(self.request, self.request.REQUEST.get('object_id'), self.request.REQUEST.get('object_text'))
-                    triple = get_or_create_triple(self.request, subject=subject, predicate=predicate, object=object)
+                    subject = get_or_create_sense(self.request.REQUEST.get('subject_id'), self.request.REQUEST.get('subject_text'))
+                    predicate = get_or_create_sense(self.request.REQUEST.get('predicate_id'), self.request.REQUEST.get('predicate_text'))
+                    object = get_or_create_sense(self.request.REQUEST.get('object_id'), self.request.REQUEST.get('object_text'))
+                    triple = get_or_create_triple(subject=subject, predicate=predicate, object=object)
                     triple.deleted = None
                     triple.save()
                     triple_vote, _ = models.TripleVote.objects.get_or_create(triple=triple, person=self.request.user.person, weight=sm.c.YES)
