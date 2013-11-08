@@ -1,0 +1,12 @@
+{% load issue_mapper urls %}
+{% if full %}<div class="issue-container well shadow">{% endif %}
+<div class="col-md-10">
+    <div class="quote-block">
+        <blockquote>
+            <p>{{ item.text }}</p>
+            <footer>&ndash; <cite><a href="{% url 'person' item.person.slug %}" target="_blank">{{ item.person.display_name }}</a>&nbsp;<span
+                class="muted">on&nbsp;<a href="{% url 'link' item.url.id %}">{{ item.said_date }}</a>&nbsp;({{ item.url.domain }})</span></cite></footer>
+        </blockquote>
+    </div>
+</div>
+{% if full %}<div class="clearfix"></div></div>{% endif %}
