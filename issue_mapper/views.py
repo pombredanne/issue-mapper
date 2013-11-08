@@ -22,6 +22,7 @@ from django.core.urlresolvers import resolve
 from django.views.decorators.cache import never_cache
 from django import forms
 import django
+from django.utils.safestring import mark_safe
 from django.utils.feedgenerator import Rss201rev2Feed
 
 from jsonview.decorators import json_view
@@ -1282,7 +1283,11 @@ class BaseListViewSimple(ListView):
 
     form_class = None
 
-    paginate_by = 10
+    #paginate_by = 10
+    
+    @property
+    def paginate_by(self):
+        return self.limit
 
     show_top_search_controls = True
 
@@ -1298,11 +1303,21 @@ class BaseListViewSimple(ListView):
     
     show_people = False
     
-    show_rationale = True
+    #show_rationale = True
+    
+    @property
+    def show_rationale(self):
+        return (
+            self.request.user.is_authenticated() and \
+            self.request.user.is_staff and \
+            self.request.user.is_active
+        )
     
     show_elections = True
     
     show_replies = False
+    
+    show_quotes = False
     
     # If true, indicates all comments, regardless of nesting, should be shown.
     show_all_comments = False
@@ -1337,6 +1352,19 @@ class BaseListViewSimple(ListView):
 #                country__iso='US',
 #                state__isnull=True,
 #                county__isnull=True)
+    
+    @property
+    def title(self):
+        person = self.person_filter
+        type = self.type
+        if person:
+            return '%s for %s' % (c.TO_PLURAL.get(type, type).title(), person.display_name)
+        return type.title()
+    
+    @property
+    def view_filter(self):
+        view = self.request.GET.get('view', '')
+        return view
     
     @property
     def election_filter(self):
@@ -1392,6 +1420,11 @@ class BaseListViewSimple(ListView):
                 (c.SORT_BY_MATCH_DSC, 'Highest Match'),
                 (c.SORT_BY_LINKS_DSC, 'Most Links'),
                 (c.SORT_BY_LINKS_ASC, 'Least Links'),
+            ]
+        elif self.type == c.QUOTE:
+            return [
+                (c.SORT_BY_CREATED_ASC, 'Least Recent'),
+                (c.SORT_BY_CREATED_DSC, 'Most Recent'),
             ]
         elif self.type == c.LINK:
             opts = [
@@ -1561,7 +1594,16 @@ class BaseListViewSimple(ListView):
                 pre_url + reverse('person_list') + qs,
                 t == c.PERSON,
             ))
-        if self.show_rationale:
+        if self.show_quotes:
+            lst.append((
+                c.QUOTE,
+                c.QUOTES,
+                self.get_quote_queryset(form=form),
+                #pre_url + reverse('quote_list') + qs,
+                pre_url + (reverse('person', kwargs=dict(person_slug=person_filter.slug, type=c.QUOTE)) if person_filter else reverse('quote_list')) + qs,
+                t == c.QUOTE,
+            ))
+        if self.show_rationale and self.request.user.is_authenticated() and self.request.user.is_staff:#TODO:remove user restrictions once public
             lst.append((
                 c.RATIONALE,
                 c.RATIONALE,
@@ -1580,12 +1622,44 @@ class BaseListViewSimple(ListView):
         return lst
 
     @property
+    def form_initial(self):
+        return {}
+
+    @property
     def form(self):
         if self.form_class:
-            #print 'self.request.GET:',self.request.GET.items()
-            form = self.form_class(self.request.GET)
+            data = self.form_initial
+            data.update(self.request.GET)
+            form = self.form_class(data)
             form.is_valid()
             return form
+
+    @property
+    def view_table_headers(self):
+        
+        def get_position_aggregate_polarity_bool_word(vo, issue):
+            agg = issue.get_position_aggregate(vo.person_filter)
+            if agg:
+                return agg.polarity_bool_word
+            return'unknown'
+        
+        if self.type == c.ISSUE:
+            if self.person_filter:
+                return [
+                    ('id','ID'),
+                    #('friendly_text','Issue'),
+                    (lambda vo, issue: mark_safe('<a href="%s">%s</a>' % (reverse('issue_wrt_person', kwargs=dict(person_slug=vo.person_filter.slug, issue_id=issue.slug)), issue.friendly_text)), 'Issue'),
+                    (get_position_aggregate_polarity_bool_word, 'Their Position'),
+                    (lambda vo, issue: issue.current_user_position.polarity_bool_word, 'Your Position'),
+                ] # [(field name, table header)]
+            else:
+                return [
+                    ('id','ID'),
+                    #('friendly_text','Issue'),
+                    (lambda vo, issue: mark_safe('<a href="%s">%s</a>' % (reverse('issue', kwargs=dict(issue_id=issue.slug)), issue.friendly_text)), 'Issue'),
+                    (lambda vo, issue: issue.current_user_position.polarity_bool_word, 'Your Position'),
+                ] # [(field name, table header)]
+        return []
 
     def get_context_data(self, *args, **kwargs):
         context = super(BaseListViewSimple, self).get_context_data(*args, **kwargs)
@@ -1599,12 +1673,46 @@ class BaseListViewSimple(ListView):
             
         show_search_results = not person_filter or person_filter.active
         
+        class TableList(object):
+            
+            def __init__(self, page, headers, view):
+                self.view = view
+                self.page = page
+                self.headers = headers # [(field,label)]
+                self.header_set = set(k for k,v in headers)
+            
+            def __iter__(self):
+                
+                class Row(object):
+                    def __init__(self, tl, row):
+                        self.tl = tl
+                        self.row = row
+                    def __getattr__(self, name):
+                        if name in ('tl', 'row'):
+                            return super(Row, self).__getattribute__(name)
+                        if name not in self.tl.header_set:
+                            raise AttributeError, 'Invalid attribute: %s' % (str(name),)
+                        return getattr(self.row, name)
+                    def __iter__(self):
+                        for field, label in self.tl.headers:
+                            if callable(field):
+                                try:
+                                    yield field(self.tl.view, self.row)
+                                except:
+                                    yield ''
+                            else:
+                                yield getattr(self.row, field)
+                
+                for row in self.page.object_list:
+                    yield Row(tl=self, row=row)
+        
         context['form'] = self.form
         context['sort_options'] = self.sort_options
         context['show_submit_link_button'] = self.show_submit_link_button
         context['show_create_rationale_button'] = self.show_create_rationale_button
         context['sort'] = self.sort
         context['title'] = self.title
+        context['view_filter'] = self.view_filter
         context['person_filter'] = person_filter
         context['link_filter'] = link_filter
         context['issue_filter'] = issue_filter
@@ -1613,6 +1721,12 @@ class BaseListViewSimple(ListView):
         context['show_top_search_controls'] = self.show_top_search_controls
         #context['qs'] = self.get_queryset()
         context['page'] = context['page_obj']
+        print 'self.view_table_headers:',self.view_table_headers
+        if self.view_filter == 'table':
+            context['table_list'] = TableList(
+                page=context['page'],
+                headers=list(self.view_table_headers),
+                view=self)
         context['issue_types'] = self.get_issue_types()
         #print "context['issue_types']:",[_[0] for _ in context['issue_types']]
         context['selected_issue_type'] = context['noun'] = self.type
@@ -1640,6 +1754,28 @@ class BaseListViewSimple(ListView):
         q = q.order_by('name')
         return q
     
+    def get_quote_queryset(self, flb=None, form=None):
+        request = self.request
+        
+        keywords = self.keywords
+        if keywords:
+            q = models.Quote.search_objects.search(keywords)
+        else:
+            q = models.Quote.objects.filter(deleted__isnull=True)
+    
+        filter_links_by = flb or self.filter_links_by
+        person_filter = self.person_filter
+        issue_filter = self.issue_filter
+        context_filter = self.context_filter
+        
+#        if context_filter:
+#            q = q.filter(url_contexts__context=context_filter)
+
+        if person_filter:
+            q = q.filter(person=person_filter)
+
+        return q
+        
     def get_link_queryset(self, flb=None, form=None):
         request = self.request
         
@@ -1723,7 +1859,7 @@ class BaseListViewSimple(ListView):
             q = q.filter(creator=creator)
             
         url_filter = self.url_filter
-        print 'url_filter:',url_filter
+        #print 'url_filter:',url_filter
         if url_filter:
             q = q.filter(id=url_filter.id)
             
@@ -1803,20 +1939,51 @@ class BaseListViewSimple(ListView):
                             issue_agreements__unknown=False,
                             issue_agreements__agree=False,
                         )
-                elif form.cleaned_data.get('agreement') == c.UNKNOWN:
+                elif form.cleaned_data.get('agreement') == c.FALSE:
+                    # Is unstated
+                    if person_filter:
+                        q = q.exclude(id__in=models.PositionAgreement.objects.filter(
+                            your_person__user=self.request.user,
+                            their_person=person_filter,
+                        ).values_list('issue__id'))
+                elif form.cleaned_data.get('agreement') == c.TRUE:
+                    # Is stated.
                     if person_filter:
                         q = q.filter(
                             issue_agreements__issue=F('id'),
                             issue_agreements__your_person__user=self.request.user,
                             issue_agreements__their_person=person_filter,
-                            issue_agreements__unknown=True,
                         )
+                elif form.cleaned_data.get('agreement') == c.UNREVIEWED_BY_YOU:
+                    if person_filter:
+                        q = q.exclude(id__in=models.Position.objects.filter(
+                            creator__user=self.request.user,
+                            person=person_filter,
+                        ).values_list('issue__id'))
                     else:
-                        q = q.filter(
-                            issue_agreements__issue=F('id'),
-                            issue_agreements__your_person__user=self.request.user,
-                            issue_agreements__unknown=True,
-                        )
+                        q = q.exclude(id__in=models.Position.objects.filter(
+                            creator__user=self.request.user,
+                        ).values_list('issue__id'))
+                    
+#                    else:
+#                        q = q.filter(
+#                            issue_agreements__issue=F('id'),
+#                            issue_agreements__your_person__user=self.request.user,
+#                            issue_agreements__unknown=True,
+#                elif form.cleaned_data.get('agreement') == c.UNKNOWN:
+#                    if person_filter:
+#                        q = q.filter(
+#                            issue_agreements__issue=F('id'),
+#                            issue_agreements__your_person__user=self.request.user,
+#                            issue_agreements__their_person=person_filter,
+#                            issue_agreements__unknown=True,
+#                        )
+#                    else:
+#                        q = q.filter(
+#                            issue_agreements__issue=F('id'),
+#                            issue_agreements__your_person__user=self.request.user,
+#                            issue_agreements__unknown=True,
+#                        )
                 elif form.cleaned_data.get('agreement') == c.UNDECIDED:
                     if person_filter:
                         q = q.filter(
@@ -2145,10 +2312,30 @@ class BaseListViewSimple(ListView):
             q = self.get_election_queryset(form=form)
         elif self.type == c.RATIONALE:
             q = self.get_rationale_queryset(form=form)
+        elif self.type == c.QUOTE:
+            q = self.get_quote_queryset(form=form)
+            if sort == c.SORT_BY_CREATED_ASC:
+                q = q.order_by('said_date')
+            elif sort == c.SORT_BY_CREATED_DSC:
+                q = q.order_by('-said_date')
         else:
             raise Exception, 'Unknown type: %s' % (self.type,)
         
         return q
+    
+    @property
+    def limit(self):
+        default_limit = 10
+        limit = self.request.GET.get('limit', self.form_initial.get('limit', default_limit))
+        try:
+            limit = int(limit)
+        except ValueError:
+            return default_limit
+        except TypeError:
+            return default_limit
+        if limit not in [k for k, v in c.RESULT_LIMIT_CHOICES]:
+            return default_limit
+        return limit
     
     def get(self, request, *args, **kwargs):
         from django.conf import settings
@@ -2157,7 +2344,7 @@ class BaseListViewSimple(ListView):
                 u"%s RSS - %s" % (self.type.title(), settings.SITE_NAME),
                 self.request.build_absolute_uri(),
                 u'' )
-            object_list = self.get_queryset()[:10]
+            object_list = self.get_queryset()[:self.limit]
             for object in object_list:
                 author = 'author'#object.get_author()
                 link = 'link'#blog_link + object.get_full_path()
@@ -2177,10 +2364,38 @@ class BaseListViewSimple(ListView):
 
         return super(BaseListViewSimple, self).get(request, *args, **kwargs)
 
+class QuoteListView(BaseListViewSimple):
+
+    form_class = forms.QuoteListForm
+    
+    show_quotes = True
+    
+    show_submit_link_button = False
+    
+    @property
+    def type(self):
+        return self.request.GET.get('type', c.QUOTE)
+
+    @property
+    def sort_default(self):
+        return c.SORT_BY_CREATED_DSC
+    
+    def get_context_data(self, *args, **kwargs):
+        context = super(QuoteListView, self).get_context_data(*args, **kwargs)
+        context.update(dict(
+            selected_issue_type=c.QUOTE,
+            noun=self.type,
+            q=self.q,
+            show_search_results=True,
+        ))
+        return context
+    
 class PersonListView(BaseListViewSimple):
 
     form_class = forms.PersonListForm
 
+    show_quotes = True
+    
     @property
     def title(self):
         election_filter = self.election_filter
@@ -2244,6 +2459,8 @@ class IssueListView(BaseListViewSimple):
     
     show_people = True
     
+    show_quotes = True
+    
     @property
     def title(self):
         return 'Issues'
@@ -2251,6 +2468,10 @@ class IssueListView(BaseListViewSimple):
     @property
     def type(self):
         return c.ISSUE
+    
+    @property
+    def form_initial(self):
+        return dict(limit=100)
     
     def get_context_data(self, *args, **kwargs):
         context = super(IssueListView, self).get_context_data(*args, **kwargs)
@@ -2270,6 +2491,8 @@ class LinkListView(BaseListViewSimple):
     
     show_people = True
 
+    show_quotes = True
+    
     @property
     def title(self):
         return 'Links'
@@ -2373,6 +2596,12 @@ class IssueListViewSimple(BaseListViewSimple):
     
     show_comments = True
     
+    show_quotes = True
+    
+    @property
+    def form_initial(self):
+        return dict(limit=100)
+    
     @property
     def filter_links_by(self):
         person_filter = self.person_filter
@@ -2392,7 +2621,7 @@ class LinkListViewSimple(BaseListViewSimple):
         if person_filter:
             return c.FILTER_LINKS_BY_ISSUE_AND_PERSON
 
-class CommentListViewSimple(BaseListViewSimple):
+class CommentListView(BaseListViewSimple):
     """
     Displays a list of comments.
     """

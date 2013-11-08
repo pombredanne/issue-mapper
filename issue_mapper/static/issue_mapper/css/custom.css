@@ -1706,3 +1706,6 @@ a.icon-star,
 a.icon-star-empty:hover{
 	color: rgb(0, 136, 204);
 }
+.issue-container .quote-block{
+    margin-bottom:-20px;
+}

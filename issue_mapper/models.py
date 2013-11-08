@@ -450,13 +450,26 @@ class Context(BaseModel):
     active = models.BooleanField(default=True)
     
     public = models.BooleanField(default=True)
-        
+    
+    capitol_address_string = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text='''The address of the closest thing to the administrative
+            or legislative "capitol" of this region.
+            This is mainly used to as a reference
+            to lookup candidate data in APIs (like Google Civic) that only
+            provide this data when given an address.<br/>
+            e.g. If this context represents a state, then this string should
+            store the address of the state's capitol building.''')
+    
     search_index = VectorField()
 
     search_objects = SearchManager(
         fields = (
             'name',
             'description',
+            'capitol_address_string',
         ),
         config = 'pg_catalog.english', # this is default
         search_field = 'search_index', # this is default
@@ -996,7 +1009,7 @@ class Person(BaseModel):
         elif 'president' in term.role.slug:
             return '%s - %s' % (term.role, term.party)
         elif 'governor' in term.role.slug:
-            return '%s %s' % (dict(USPS_CHOICES).get(term.state, term.state), term.role)
+            return '%s %s' % (dict(USPS_CHOICES).get(term.state, term.state) or '', term.role)
         return '%s' % (term.role,)
 
     @classmethod
@@ -2964,6 +2977,15 @@ class Issue(BaseModel):
         if q.count():
             return q[0]
     
+    def get_position_aggregate(self, person):
+        position = None
+        if person.real:
+            try:
+                return PositionAggregate.objects.get(
+                    issue=self, person=person, date__isnull=True)
+            except PositionAggregate.DoesNotExist:
+                pass
+    
     def positioned(self, person, creator):
         if not creator:
             return False
@@ -4557,6 +4579,10 @@ class Position(BaseModel):
         return c.POSITION_TO_VERB_INFINITIVE.get(self.polarity, self.polarity)
     
     @property
+    def polarity_bool_word(self):
+        return c.POSITION_TO_BOOL.get(self.polarity, self.polarity) or 'unknown'
+    
+    @property
     def polarity_3rd_singular_present(self):
         return c.POSITION_TO_VERB.get(self.polarity, self.polarity)
     
@@ -5071,6 +5097,16 @@ class PositionAggregate(BaseModel):
         if not self.total_count:
             return
         return sum([-1*self.oppose_count, self.favor_count])/self.total_count
+    
+    @property
+    def polarity_infinitive(self):
+        polarity_name = c.POSITION_SCORE_TO_NAME.get(self.normalized_polarity, '')
+        return c.POSITION_TO_VERB_INFINITIVE.get(polarity_name, polarity_name)
+    
+    @property
+    def polarity_bool_word(self):
+        polarity_name = c.POSITION_SCORE_TO_NAME.get(self.normalized_polarity, '')
+        return c.POSITION_TO_BOOL.get(polarity_name, polarity_name) or 'unknown'
     
     @property
     def normalized_classification(self):
@@ -6056,7 +6092,12 @@ class PositionAgreement(models.Model):
         managed = False
         db_table = 'issue_mapper_positionagreement'
 
+class QuoteManager(models.Manager):
+    pass
+
 class Quote(BaseModel):
+    
+    objects = QuoteManager()
     
     person = models.ForeignKey(
         Person,
@@ -6073,6 +6114,17 @@ class Quote(BaseModel):
         help_text='The date when the person said or wrote the quoted text.')
     
     text = models.TextField(blank=False, null=False)
+        
+    search_index = VectorField()
+
+    search_objects = SearchManager(
+        fields = (
+            'text',
+        ),
+        config = 'pg_catalog.english', # this is default
+        search_field = 'search_index', # this is default
+        auto_update_search_field = True
+    )
     
     class Meta:
         app_label = APP_LABEL
@@ -6086,6 +6138,10 @@ class Quote(BaseModel):
             (c.PERM_QUOTE_FLAG, u'Flag a quote for moderation.'),
             (c.PERM_QUOTE_VOTE, u'Vote on the importance of a quote.'),
         )
+        
+    @property
+    def object(self):
+        return self
 
 class ElectionManager(models.Manager):
     
@@ -6105,7 +6161,14 @@ class Election(BaseModel):
     
     name = models.CharField(max_length=500, blank=False, null=False)
     
-    slug = models.SlugField(max_length=500, blank=True, null=True, unique=True)
+    slug = models.SlugField(
+        max_length=500,
+        blank=True,
+        null=True,
+        unique=True,
+        help_text='''Globally unique URL slug. Convention is to format it as "name-year".''')
+    
+    notes = models.TextField(blank=True, null=True)
     
     google_civic_id = models.CharField(
         max_length=100,
@@ -6135,6 +6198,11 @@ class Election(BaseModel):
         default=False,
         help_text='''If checked, the keywords field will be populated from
             candidates.''')
+    
+    results_final = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='''If checked, indicates all winners have been recorded.''')
     
     search_index = VectorField()
 
@@ -6281,6 +6349,15 @@ class Candidate(BaseModel):
     won = models.NullBooleanField(default=None, db_index=True)
     
     votes = models.PositiveIntegerField(default=0)
+    
+    is_retention = models.BooleanField(
+        default=False,
+        help_text='''If checked, indicates this candidate is not directly
+            competing with anyone.''')
+    
+    campaign_site = models.URLField(
+        blank=True, null=True,
+        help_text='The homepage of the person\'s official campaign website.')
     
     class Meta:
         app_label = APP_LABEL

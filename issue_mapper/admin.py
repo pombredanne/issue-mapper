@@ -1130,6 +1130,16 @@ class QuoteAdmin(
         'url',
     )
     
+    actions = (
+        'refresh',
+    )
+    
+    def refresh(self, request, qs=None):
+        for r in qs:
+            r.save()
+    refresh.short_description = \
+        'Refresh selected %(verbose_name_plural)s records'
+    
 site.register(models.Quote, QuoteAdmin)
 
 class StateAdmin(
@@ -1239,6 +1249,7 @@ class ElectionCandidateInline(admin_steroids.BetterRawIdFieldsTabularInline):
         'person',
         'role',
         'party',
+        'is_retention',
         'won',
     )
     
@@ -1256,15 +1267,18 @@ class ElectionAdmin(
     
     list_display = (
         'id',
-        'name',
         'context',
+        'name',
+        'slug',
         'election_date',
         'public',
         'active',
+        'results_final',
     )
     
     list_filter = (
         'public',
+        'results_final',
         ('context', NullListFilter),
     )
     

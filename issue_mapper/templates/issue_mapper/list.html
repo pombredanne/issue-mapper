@@ -152,115 +152,135 @@
                 {% endif %}
                 
                 {% if page.object_list %}
-                    {% if random_new %}
-                        <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %} new-issue">
-                            {#<div class="col-md-1"><span title="{{ random_new.absolute_votes }}">new</span></div>#}
-                            {% list_item random_new.object person_filter %}
-                            <div class="clearfix"></div>
-                        </div>
-                    {% endif %}
-                    {% for item in page.object_list %}
-                        <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %}{% if noun == 'reply' and item.object.unread %} unread-reply{{ item.object.mark_read }}{% endif %}">
-                        
-                            {% comment %}
-                            {% if noun != 'comment' and noun != 'reply' %}
-                                <div class="col-md-1">
-                                    {#<span>{% add page.start_index forloop.counter -1 %}</span>#}
-                                    {% if noun != 'person' %}
-                                        {#{% if person == creator %}{% position_sparkline item.last_position_of_current_user %}{% else %}#}
-                                        {% position_sparkline item person_filter %}
-                                        {#{% endif %}#}
-                                    {% endif %}
-                                    {% if noun == 'match' %}
-                                        <span class="match-percent">{{ item.value_percent|floatformat:0 }}%</span>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                            {% endcomment %}
-                            
-                            {% switch selected_issue_type %}
-                                {% case "person" %}
-                                    {% lookup_candidate election_filter item.object 'candidate' %}
-                                    <div class="col-md-2" style="text-align:center;">
-                                        {#<a href="{% url 'person' item.object.slug %}?q=" target="_blank">#}
-                                        {% person_photo item.object %}
-                                        {#</a>#}
-                                        <div class="clearfix"></div>
-                                    </div>
-                                    <div class="col-md-10">
-                                        <a href="{% url 'person' item.object.slug %}?q=" target="_blank">
-                                            {% if item.object.slug %}
-                                                {{ item.object.display_name }}
-                                                <span class="muted">
-                                                    {{ item.object.last_term_title }}
-                                                    {% if item.object.has_current_user_match %}
-                                                        - <b>{{ item.object.current_user_match_percent|floatformat:0 }}%</b>
-                                                        across {{ item.object.current_user_match_issues.count }} issues
-                                                    {% endif %}
-                                                    {% if request.candidate %}
-                                                        &nbsp;-&nbsp;
-                                                        {{ request.candidate.party }}
-                                                        &nbsp;-&nbsp;
-                                                        running for {{ request.candidate.role|lower }}
-                                                    {% endif %}
-                                                    &nbsp;-&nbsp;{{ item.object.issue_link_count }}&nbsp;links
-                                                </span>
-                                                <br/><br/>
-                                            {% endif %}
-                                        </a>
-                                    </div>
-                                {% case "rationale" %}
-                                    <div class="col-md-10">
-									    <div class="issue-link"><a href="{% url 'rationale_edit' item.id %}" target="_blank" title="">{{ item.name|safe }}</a></div>
-									</div>
-                                {% case "matches" %}
-                                    <div class="col-md-1" style="text-align:center;">
-                                        {% person_photo item.matchee %}
-                                        <div class="clearfix"></div>
-                                    </div>
-                                    <div class="col-md-8">{% if item.matchee.slug %}
-                                        {{ item.matchee.display_name }}
-                                        <br/>
-                                        <div class="muted">based on {{ item.issue_count }} common issues</div>
-                                    {% endif %}</div>
-                                    <div class="col-md-1" style="float:right; text-align:right;margin-top:35px;">
-                                        <a href="{% url 'person' item.matchee.slug %}?q=">
-                                            <button class="btn btn-primary">
-                                                View <i class="icon-angle-right icon-white"></i>
-                                            </button>
-                                        </a>
-                                    </div>
-                                {% case "link" %}
-                                    {% list_item item.object person_filter %}
-                                {% case "election" %}
-                                    {% list_item item.object person_filter %}
-                                {% case "comment" %}
-                                    {% list_item_comment item.object show_comment_replies %}
-                                {% case "reply" %}
-                                    {% list_item_comment item.object 0 %}
-                                {% else %}
-                                    <div class="col-md-10" rand="{{ item.object.rand }}">
-                                        <div class="issue-link"><a href="{% if person_filter %}{% url 'issue_wrt_person' person_filter.slug item.object.slug %}{% else %}{% url 'issue' item.object.slug %}{% endif %}">{{ item.object.friendly_text }}</a></div>
-                                        <div class="issue-details">
-                                            {#<span>created {{ item.object.created|date:'DATETIME_FORMAT'|nbsp }} by {{ item.object.creator }}</span>#}
-                                        </div>
-                                        <div class="issue-details">
-                                            <span>
-                                                <b>{{ item.object.links.count }}</b>
-                                                link{% plurals item.object.links %} |
-                                                <b>{{ item.object.undeleted_positions.count }}</b>
-                                                stated position{% plurals item.object.positions %}
-                                                {% if item.object.current_user_position %}
-                                                    | you {{ item.object.current_user_position.polarity_infinitive }}
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                    </div>
-                            {% endswitch %}
-                            <div class="clearfix"></div>
-                        </div>
-                    
-                    {% endfor %}
+                    {% switch view_filter %}
+                        {% case "table" %}
+                            <table class="table table-striped">
+                                <thead>
+                                    {% for _, label in table_list.headers %}
+                                        <th>{{ label }}</th>
+                                    {% endfor %}
+                                </thead>
+	                            {% for item in table_list %}
+	                                <tr>
+	                                    {% for field in item %}
+	                                        <td>{{ field }}</td>
+	                                    {% endfor %}
+	                                </tr>
+	                            {% endfor %}
+                            </table>
+                        {% else %}
+	                    {% if random_new %}
+	                        <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %} new-issue">
+	                            {#<div class="col-md-1"><span title="{{ random_new.absolute_votes }}">new</span></div>#}
+	                            {% list_item random_new.object person_filter %}
+	                            <div class="clearfix"></div>
+	                        </div>
+	                    {% endif %}
+	                    {% for item in page.object_list %}
+	                        <div class="issue-container {% if noun != 'comment' and noun != 'reply' %}well shadow{% endif %}{% if noun == 'reply' and item.object.unread %} unread-reply{{ item.object.mark_read }}{% endif %}">
+	                        
+	                            {% comment %}
+	                            {% if noun != 'comment' and noun != 'reply' %}
+	                                <div class="col-md-1">
+	                                    {#<span>{% add page.start_index forloop.counter -1 %}</span>#}
+	                                    {% if noun != 'person' %}
+	                                        {#{% if person == creator %}{% position_sparkline item.last_position_of_current_user %}{% else %}#}
+	                                        {% position_sparkline item person_filter %}
+	                                        {#{% endif %}#}
+	                                    {% endif %}
+	                                    {% if noun == 'match' %}
+	                                        <span class="match-percent">{{ item.value_percent|floatformat:0 }}%</span>
+	                                    {% endif %}
+	                                </div>
+	                            {% endif %}
+	                            {% endcomment %}
+	                            
+	                            {% switch selected_issue_type %}
+	                                {% case "person" %}
+	                                    {% lookup_candidate election_filter item.object 'candidate' %}
+	                                    <div class="col-md-2" style="text-align:center;">
+	                                        {#<a href="{% url 'person' item.object.slug %}?q=" target="_blank">#}
+	                                        {% person_photo item.object %}
+	                                        {#</a>#}
+	                                        <div class="clearfix"></div>
+	                                    </div>
+	                                    <div class="col-md-10">
+	                                        <a href="{% url 'person' item.object.slug %}?q=" target="_blank">
+	                                            {% if item.object.slug %}
+	                                                {{ item.object.display_name }}
+	                                                <span class="muted">
+	                                                    {{ item.object.last_term_title }}
+	                                                    {% if item.object.has_current_user_match %}
+	                                                        - <b>{{ item.object.current_user_match_percent|floatformat:0 }}%</b>
+	                                                        across {{ item.object.current_user_match_issues.count }} issues
+	                                                    {% endif %}
+	                                                    {% if request.candidate %}
+	                                                        &nbsp;-&nbsp;
+	                                                        {{ request.candidate.party }}
+	                                                        &nbsp;-&nbsp;
+	                                                        running for {{ request.candidate.role|lower }}
+	                                                    {% endif %}
+	                                                    &nbsp;-&nbsp;{{ item.object.issue_link_count }}&nbsp;links
+	                                                </span>
+	                                                <br/><br/>
+	                                            {% endif %}
+	                                        </a>
+	                                    </div>
+	                                {% case "rationale" %}
+	                                    <div class="col-md-10">
+										    <div class="issue-link"><a href="{% url 'rationale_edit' item.id %}" target="_blank" title="">{{ item.name|safe }}</a></div>
+										</div>
+	                                {% case "matches" %}
+	                                    <div class="col-md-1" style="text-align:center;">
+	                                        {% person_photo item.matchee %}
+	                                        <div class="clearfix"></div>
+	                                    </div>
+	                                    <div class="col-md-8">{% if item.matchee.slug %}
+	                                        {{ item.matchee.display_name }}
+	                                        <br/>
+	                                        <div class="muted">based on {{ item.issue_count }} common issues</div>
+	                                    {% endif %}</div>
+	                                    <div class="col-md-1" style="float:right; text-align:right;margin-top:35px;">
+	                                        <a href="{% url 'person' item.matchee.slug %}?q=">
+	                                            <button class="btn btn-primary">
+	                                                View <i class="icon-angle-right icon-white"></i>
+	                                            </button>
+	                                        </a>
+	                                    </div>
+	                                {% case "quote" %}
+	                                    {% list_item item.object person_filter %}
+	                                {% case "link" %}
+	                                    {% list_item item.object person_filter %}
+	                                {% case "election" %}
+	                                    {% list_item item.object person_filter %}
+	                                {% case "comment" %}
+	                                    {% list_item_comment item.object show_comment_replies %}
+	                                {% case "reply" %}
+	                                    {% list_item_comment item.object 0 %}
+	                                {% else %}
+	                                    <div class="col-md-10" rand="{{ item.object.rand }}">
+	                                        <div class="issue-link"><a href="{% if person_filter %}{% url 'issue_wrt_person' person_filter.slug item.object.slug %}{% else %}{% url 'issue' item.object.slug %}{% endif %}">{{ item.object.friendly_text }}</a></div>
+	                                        <div class="issue-details">
+	                                            {#<span>created {{ item.object.created|date:'DATETIME_FORMAT'|nbsp }} by {{ item.object.creator }}</span>#}
+	                                        </div>
+	                                        <div class="issue-details">
+	                                            <span>
+	                                                <b>{{ item.object.links.count }}</b>
+	                                                link{% plurals item.object.links %} |
+	                                                <b>{{ item.object.undeleted_positions.count }}</b>
+	                                                stated position{% plurals item.object.positions %}
+	                                                {% if item.object.current_user_position %}
+	                                                    | you {{ item.object.current_user_position.polarity_infinitive }}
+	                                                {% endif %}
+	                                            </span>
+	                                        </div>
+	                                    </div>
+	                            {% endswitch %}
+	                            <div class="clearfix"></div>
+	                        </div>
+	                    
+	                    {% endfor %}
+                    {% endswitch %}
                 {% else %}
                     <div class="muted">No records found.</div>
                 {% endif %}

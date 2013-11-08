@@ -192,33 +192,53 @@ def _get_party_choices():
     for r in q:
         yield r.slug, r.name
 
+class QuoteListForm(SearchListForm):
+    pass
+
 class IssueListForm(SearchListForm):
     
     active = django.forms.ChoiceField(
         required=False,
         choices=[
-            ('','---'),
+            ('','any'),
             ('false', 'No'),
             ('true', 'Yes'),
         ])
+    
+    view = django.forms.ChoiceField(
+        required=False,
+        label='View as',
+        choices=[
+            ('','List'),
+            ('table', 'Table'),
+        ])
+    
+    limit = django.forms.ChoiceField(
+        required=False,
+        initial=100,
+        label='Results per page',
+        choices=c.RESULT_LIMIT_CHOICES)
     
     agreement = django.forms.ChoiceField(
         required=False,
         label='Their position',
         choices=[
-            ('','---'),
+            ('','any'),
+            (c.FALSE, 'is unstated'),
+            (c.TRUE, 'is stated'),
             (c.FAVOR, 'agrees with the issue'),
             (c.AGREE, 'agrees with you'),
             (c.OPPOSE, 'disagrees with the issue'),
             (c.DISAGREE, 'disagrees with you'),
             (c.UNDECIDED, 'is undecided'),
+            (c.UNREVIEWED_BY_YOU, 'is unreviewed by you'),
         ])
     
     positioned = django.forms.ChoiceField(
         required=False,
         label='Your position',
         choices=[
-            ('','---'),
+            ('','any'),
             (c.FALSE, 'is unstated'),
             (c.TRUE, 'is stated'),
             (c.FAVOR, 'agrees with the issue'),
@@ -230,8 +250,6 @@ class IssueListForm(SearchListForm):
 #        required=False,
 #        label='You have a position',
 #        choices=[('','---'), ('true','Yes'), ('false','No')])
-
-from django_localflavor_us.us_states import USPS_CHOICES
 
 class ElectionListForm(SearchListForm):
     pass

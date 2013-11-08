@@ -44,11 +44,25 @@ QUESTION_TYPES = (
     UNANSWERED,
     UPDATED,
     PEOPLE,
+    QUOTE,
     LINK,
     URL,
     MATCHES,
     RATIONALE,
 )
+
+TO_PLURAL = {
+    COMMENT: COMMENTS,
+    REPLY: REPLIES,
+    ISSUE: ISSUES,
+    QUOTE: QUOTES,
+    CONTEXT: CONTEXTS,
+    RATIONALE: RATIONALE,
+    PERSON: PEOPLE,
+    URL: URLS,
+    LINK: LINKS,
+    ELECTION: ELECTIONS,
+}
 
 # Vote.
 UPVOTE = +1
@@ -117,6 +131,7 @@ POSITION_SCORES = (
     (UNDECIDED, 0),
     (FAVOR, +1),
 )
+POSITION_SCORE_TO_NAME = dict((v, k) for k,v in POSITION_SCORES)
 ALLOWED_POSITION_VALUES = POSITIONS + (None,)
 POSITION_CHOICES_PAST = (
     #(STRONGLY_OPPOSE, 'Strongly Disagree'),
@@ -138,6 +153,13 @@ POSITION_TO_VERB_INFINITIVE = {
     UNDECIDED: 'are undecided',
     FAVOR: 'agree',
     STRONGLY_FAVOR: 'strongly agree',
+}
+POSITION_TO_BOOL = {
+    STRONGLY_OPPOSE: 'no',
+    OPPOSE: 'no',
+    UNDECIDED: 'unsure',
+    FAVOR: 'yes',
+    STRONGLY_FAVOR: 'yes',
 }
 
 # Person.
@@ -295,6 +317,8 @@ HTML = 'html'
 AGREE = 'agree'
 DISAGREE = 'disagree'
 
+UNREVIEWED_BY_YOU = 'unreviewed-by-you'
+
 FALSE = 'false'
 TRUE = 'true'
 
@@ -332,3 +356,13 @@ SUPPORTS_NO = 'supports no'
 SUPPORTED_YES_BY = 'supported yes by'
 SUPPORTED_NO_BY = 'supported no by'
 BECAUSE = 'because'
+
+VIEW_DEFAULT = ''
+VIEW_TABLE = 'table'
+
+RESULT_LIMIT_CHOICES = (
+    (10, '10'),
+    (25, '25'),
+    (50, '50'),
+    (100, '100'),
+)
